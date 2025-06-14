@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Edit, RotateCcw, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
-import { Flashcard } from "@/pages/Index";
+import { Flashcard } from "@/types/flashcard";
 
 interface FlashcardPreviewProps {
   flashcards: Flashcard[];
@@ -62,6 +62,8 @@ const FlashcardPreview = ({ flashcards, onCardEdit }: FlashcardPreviewProps) => 
       {/* Cards Grid - Responsive */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
         {currentCards.map((card) => {
+          if (!card || !card.id) return null; // Add safety check
+          
           const isFlipped = flippedCards.has(card.id);
           return (
             <Card 
@@ -98,7 +100,7 @@ const FlashcardPreview = ({ flashcards, onCardEdit }: FlashcardPreviewProps) => 
                   {!isFlipped ? (
                     <div>
                       <CardTitle className="text-sm sm:text-base mb-2 sm:mb-3 line-clamp-4">
-                        {card.front}
+                        {card.front || "No question available"}
                       </CardTitle>
                       <div className="flex items-center justify-center mt-4">
                         <Button variant="outline" size="sm" className="gap-1 sm:gap-2 text-xs sm:text-sm">
@@ -113,7 +115,7 @@ const FlashcardPreview = ({ flashcards, onCardEdit }: FlashcardPreviewProps) => 
                       <CardDescription className="text-xs sm:text-sm text-muted-foreground mb-2">
                         Answer:
                       </CardDescription>
-                      <p className="text-sm sm:text-base line-clamp-5">{card.back}</p>
+                      <p className="text-sm sm:text-base line-clamp-5">{card.back || "No answer available"}</p>
                       <div className="flex items-center justify-center mt-4">
                         <Button variant="outline" size="sm" className="gap-1 sm:gap-2 text-xs sm:text-sm">
                           <EyeOff className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -185,7 +187,6 @@ const FlashcardPreview = ({ flashcards, onCardEdit }: FlashcardPreviewProps) => 
         </div>
       )}
 
-      {/* Action Buttons - Mobile Stack */}
       <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 pt-4 sm:pt-6 border-t">
         <Button
           variant="outline"

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Brain, Wand2, CheckCircle, XCircle, Lightbulb, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import type { Flashcard } from "@/pages/Index";
+import type { Flashcard } from "@/types/flashcard";
 
 interface AICardEditorProps {
   card: Flashcard;
@@ -26,6 +25,18 @@ interface AISuggestion {
 }
 
 const AICardEditor = ({ card, onCardUpdate, onClose }: AICardEditorProps) => {
+  // Add safety check for card
+  if (!card) {
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white dark:bg-gray-900 rounded-lg p-6">
+          <p>No card selected for editing.</p>
+          <Button onClick={onClose}>Close</Button>
+        </div>
+      </div>
+    );
+  }
+
   const [editedCard, setEditedCard] = useState<Flashcard>(card);
   const [aiSuggestions, setAiSuggestions] = useState<AISuggestion[]>([]);
   const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
@@ -141,7 +152,7 @@ const AICardEditor = ({ card, onCardUpdate, onClose }: AICardEditorProps) => {
               <div>
                 <label className="text-sm font-medium mb-2 block">Question (Front)</label>
                 <Textarea
-                  value={editedCard.front}
+                  value={editedCard.front || ""}
                   onChange={(e) => setEditedCard({...editedCard, front: e.target.value})}
                   className="min-h-[120px]"
                   placeholder="Enter your question..."
@@ -150,7 +161,7 @@ const AICardEditor = ({ card, onCardUpdate, onClose }: AICardEditorProps) => {
               <div>
                 <label className="text-sm font-medium mb-2 block">Answer (Back)</label>
                 <Textarea
-                  value={editedCard.back}
+                  value={editedCard.back || ""}
                   onChange={(e) => setEditedCard({...editedCard, back: e.target.value})}
                   className="min-h-[120px]"
                   placeholder="Enter your answer..."
