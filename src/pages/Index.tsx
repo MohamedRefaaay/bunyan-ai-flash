@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -171,7 +172,7 @@ const Index = () => {
   ];
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className={`min-h-screen bg-muted/30 ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
       <Header />
       
       <div className="container mx-auto px-4 py-8 space-y-8">
@@ -189,7 +190,7 @@ const Index = () => {
         </div>
 
         {/* Welcome Section */}
-        <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <Card>
           <CardHeader className="text-center">
             <div className="flex items-center justify-center gap-3 mb-4">
               <BookOpen className="h-12 w-12 text-blue-600" />

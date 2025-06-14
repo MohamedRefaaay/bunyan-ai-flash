@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -108,7 +107,7 @@ Do not include any other text, explanations, or markdown formatting in your resp
   };
 
   return (
-    <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50">
+    <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Bot className="h-5 w-5" />
