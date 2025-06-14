@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Cloud, Drive, Upload, Download, FolderOpen } from 'lucide-react';
+import { Cloud, Upload, Download, FolderOpen } from 'lucide-react';
 import { toast } from 'sonner';
 
 const CloudIntegration = () => {
@@ -38,7 +38,7 @@ const CloudIntegration = () => {
           <div className="p-4 border rounded-lg bg-white">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <Drive className="h-5 w-5 text-blue-600" />
+                <Cloud className="h-5 w-5 text-blue-600" />
                 <span className="font-medium">Google Drive</span>
               </div>
               {connectedServices.includes('gdrive') ? (
