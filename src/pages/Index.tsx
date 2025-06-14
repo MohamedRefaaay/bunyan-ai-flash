@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookOpen, Upload, Youtube, Bot, BarChart3, Users, Cloud, Languages } from 'lucide-react';
+import { BookOpen, Upload, Youtube, Bot, BarChart3, Users, Cloud, Languages, Settings as SettingsIcon } from 'lucide-react';
 
 import Header from '@/components/navigation/Header';
 import AudioUploader from '@/components/AudioUploader';
@@ -18,6 +17,7 @@ import FlashcardPersonalization from '@/components/FlashcardPersonalization';
 import VisualFlashcardGenerator from '@/components/VisualFlashcardGenerator';
 import CommunityModule from '@/components/CommunityModule';
 import CloudIntegration from '@/components/CloudIntegration';
+import Settings from '@/components/Settings';
 import type { Flashcard } from '@/types/flashcard';
 
 const Index = () => {
@@ -160,6 +160,13 @@ const Index = () => {
       icon: Cloud,
       description: 'احفظ وزامن بطاقاتك عبر التخزين السحابي',
       component: <CloudIntegration />
+    },
+    {
+      id: 'settings',
+      title: 'الإعدادات',
+      icon: SettingsIcon,
+      description: 'إدارة إعدادات التطبيق ومفاتيح API',
+      component: <Settings />
     }
   ];
 
@@ -213,7 +220,7 @@ const Index = () => {
 
         {/* Features Tabs */}
         <Tabs defaultValue="upload" className="w-full">
-          <TabsList className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 h-auto p-2 bg-white/50 backdrop-blur-sm">
+          <TabsList className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2 h-auto p-2 bg-white/50 backdrop-blur-sm">
             {features.map((feature) => (
               <TabsTrigger
                 key={feature.id}
