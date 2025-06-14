@@ -1,16 +1,16 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { RotateCcw, Eye, EyeOff, ChevronLeft, ChevronRight } from "lucide-react";
+import { RotateCcw, Eye, EyeOff, ChevronLeft, ChevronRight, Edit } from "lucide-react";
 import type { Flashcard } from "@/pages/Index";
 
 interface FlashcardPreviewProps {
   flashcards: Flashcard[];
+  onCardEdit?: (card: Flashcard) => void;
 }
 
-const FlashcardPreview = ({ flashcards }: FlashcardPreviewProps) => {
+const FlashcardPreview = ({ flashcards, onCardEdit }: FlashcardPreviewProps) => {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [showBack, setShowBack] = useState(false);
   const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
@@ -87,6 +87,17 @@ const FlashcardPreview = ({ flashcards }: FlashcardPreviewProps) => {
         </div>
         
         <div className="flex gap-2">
+          {onCardEdit && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onCardEdit(currentCard)}
+              className="gap-2"
+            >
+              <Edit className="h-4 w-4" />
+              Edit Card
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
@@ -177,6 +188,19 @@ const FlashcardPreview = ({ flashcards }: FlashcardPreviewProps) => {
                     <Badge variant="secondary" className="text-xs">
                       {card.type}
                     </Badge>
+                    {onCardEdit && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onCardEdit(card);
+                        }}
+                        className="h-6 w-6 p-0"
+                      >
+                        <Edit className="h-3 w-3" />
+                      </Button>
+                    )}
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground line-clamp-3">

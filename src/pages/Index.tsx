@@ -1,11 +1,13 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, FileAudio, Brain, Download, Sparkles } from "lucide-react";
+import { Upload, FileAudio, Brain, Download, Sparkles, BarChart3, Youtube, Wand2 } from "lucide-react";
 import AudioUploader from "@/components/AudioUploader";
 import FlashcardGenerator from "@/components/FlashcardGenerator";
 import FlashcardPreview from "@/components/FlashcardPreview";
+import AnalyticsDashboard from "@/components/AnalyticsDashboard";
+import YouTubeIntegration from "@/components/YouTubeIntegration";
+import AICardEditor from "@/components/AICardEditor";
 import { toast } from "sonner";
 
 export interface Flashcard {
@@ -22,21 +24,32 @@ const Index = () => {
   const [transcript, setTranscript] = useState<string>("");
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [editingCard, setEditingCard] = useState<Flashcard | null>(null);
 
   const handleFileUpload = (file: File) => {
     setAudioFile(file);
     toast.success("Audio file uploaded successfully!");
   };
 
-  const handleTranscriptGenerated = (generatedTranscript: string) => {
+  const handleTranscriptGenerated = (generatedTranscript: string, title?: string) => {
     setTranscript(generatedTranscript);
     setCurrentStep("processing");
+    if (title) {
+      toast.success(`Transcript generated from: ${title}`);
+    }
   };
 
   const handleFlashcardsGenerated = (generatedFlashcards: Flashcard[]) => {
     setFlashcards(generatedFlashcards);
     setCurrentStep("preview");
     toast.success(`${generatedFlashcards.length} flashcards generated successfully!`);
+  };
+
+  const handleCardUpdate = (updatedCard: Flashcard) => {
+    setFlashcards(prevCards => 
+      prevCards.map(card => card.id === updatedCard.id ? updatedCard : card)
+    );
   };
 
   const exportFlashcards = (format: "csv" | "json") => {
@@ -101,6 +114,18 @@ const Index = () => {
           <p className="text-lg text-muted-foreground mt-2" dir="rtl">
             حوّل تسجيلات محاضراتك إلى بطاقات تعليمية ذكية باستخدام الذكاء الاصطناعي
           </p>
+          
+          {/* New Action Buttons */}
+          <div className="flex justify-center gap-4 mt-6">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowAnalytics(true)}
+              className="gap-2"
+            >
+              <BarChart3 className="h-4 w-4" />
+              Analytics
+            </Button>
+          </div>
         </div>
 
         {/* Progress Indicator */}
@@ -140,20 +165,25 @@ const Index = () => {
         {/* Main Content */}
         <div className="max-w-4xl mx-auto">
           {currentStep === "upload" && (
-            <Card className="border-0 shadow-xl">
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl">Upload Your Lecture Recording</CardTitle>
-                <CardDescription>
-                  Support for MP3, WAV, M4A, and other audio formats
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <AudioUploader 
-                  onFileUpload={handleFileUpload}
-                  onTranscriptGenerated={handleTranscriptGenerated}
-                />
-              </CardContent>
-            </Card>
+            <div className="space-y-6">
+              <Card className="border-0 shadow-xl">
+                <CardHeader className="text-center">
+                  <CardTitle className="text-2xl">Upload Your Lecture Recording</CardTitle>
+                  <CardDescription>
+                    Support for MP3, WAV, M4A, and other audio formats
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <AudioUploader 
+                    onFileUpload={handleFileUpload}
+                    onTranscriptGenerated={handleTranscriptGenerated}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* YouTube Integration */}
+              <YouTubeIntegration onTranscriptGenerated={handleTranscriptGenerated} />
+            </div>
           )}
 
           {currentStep === "processing" && (
@@ -211,7 +241,10 @@ const Index = () => {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <FlashcardPreview flashcards={flashcards} />
+                  <FlashcardPreview 
+                    flashcards={flashcards} 
+                    onCardEdit={setEditingCard}
+                  />
                 </CardContent>
               </Card>
             </div>
@@ -251,6 +284,21 @@ const Index = () => {
           </div>
         )}
       </div>
+
+      {/* Analytics Dashboard Modal */}
+      <AnalyticsDashboard 
+        isVisible={showAnalytics} 
+        onClose={() => setShowAnalytics(false)} 
+      />
+
+      {/* AI Card Editor Modal */}
+      {editingCard && (
+        <AICardEditor
+          card={editingCard}
+          onCardUpdate={handleCardUpdate}
+          onClose={() => setEditingCard(null)}
+        />
+      )}
     </div>
   );
 };
