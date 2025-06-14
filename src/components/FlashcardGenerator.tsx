@@ -8,22 +8,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Loader2, Sparkles, Edit3 } from "lucide-react";
 import { toast } from "sonner";
-import type { Flashcard } from "@/pages/Index";
+import type { Flashcard } from "@/types/flashcard";
 
 interface FlashcardGeneratorProps {
-  transcript: string;
-  onFlashcardsGenerated: (flashcards: Flashcard[]) => void;
-  isProcessing: boolean;
-  setIsProcessing: (processing: boolean) => void;
+  transcript?: string;
+  onFlashcardsGenerated?: (flashcards: Flashcard[]) => void;
+  isProcessing?: boolean;
+  setIsProcessing?: (processing: boolean) => void;
 }
 
 const FlashcardGenerator = ({ 
-  transcript, 
-  onFlashcardsGenerated, 
-  isProcessing, 
-  setIsProcessing 
+  transcript = "", 
+  onFlashcardsGenerated = () => {}, 
+  isProcessing = false, 
+  setIsProcessing = () => {} 
 }: FlashcardGeneratorProps) => {
-  const [editedTranscript, setEditedTranscript] = useState(transcript);
+  const [editedTranscript, setEditedTranscript] = useState(transcript || "");
   const [cardType, setCardType] = useState<"mixed" | "basic" | "cloze" | "mcq">("mixed");
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
   const [cardCount, setCardCount] = useState([10]);
@@ -137,7 +137,7 @@ const FlashcardGenerator = ({
           id="transcript"
           value={editedTranscript}
           onChange={(e) => setEditedTranscript(e.target.value)}
-          placeholder="Review and edit your transcript before generating flashcards..."
+          placeholder="Enter your transcript here or upload audio/video content to generate one automatically..."
           className="min-h-[200px] resize-none"
         />
         <p className="text-sm text-muted-foreground">

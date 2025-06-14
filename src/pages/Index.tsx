@@ -18,9 +18,54 @@ import FlashcardPersonalization from '@/components/FlashcardPersonalization';
 import VisualFlashcardGenerator from '@/components/VisualFlashcardGenerator';
 import CommunityModule from '@/components/CommunityModule';
 import CloudIntegration from '@/components/CloudIntegration';
+import type { Flashcard } from '@/types/flashcard';
 
 const Index = () => {
   const [isRTL, setIsRTL] = useState(true);
+  const [transcript, setTranscript] = useState('');
+  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedCard, setSelectedCard] = useState<Flashcard | null>(null);
+  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [showEditor, setShowEditor] = useState(false);
+
+  const handleFileUpload = (file: File) => {
+    console.log('File uploaded:', file.name);
+    // In a real app, this would process the file
+  };
+
+  const handleTranscriptGenerated = (newTranscript: string) => {
+    setTranscript(newTranscript);
+  };
+
+  const handleFlashcardsGenerated = (newFlashcards: Flashcard[]) => {
+    setFlashcards(newFlashcards);
+  };
+
+  const handleCardEdit = (card: Flashcard) => {
+    setSelectedCard(card);
+    setShowEditor(true);
+  };
+
+  const handleCardUpdate = (updatedCard: Flashcard) => {
+    setFlashcards(prev => 
+      prev.map(card => card.id === updatedCard.id ? updatedCard : card)
+    );
+    setShowEditor(false);
+    setSelectedCard(null);
+  };
+
+  const handleStyleChange = (styles: any) => {
+    console.log('Style changed:', styles);
+  };
+
+  const handleRecommendationsApply = (recommendations: any) => {
+    console.log('Recommendations applied:', recommendations);
+  };
+
+  const handleVisualCardsGenerated = (visualCards: Flashcard[]) => {
+    setFlashcards(prev => [...prev, ...visualCards]);
+  };
 
   const features = [
     {
@@ -28,63 +73,79 @@ const Index = () => {
       title: 'رفع الملفات الصوتية',
       icon: Upload,
       description: 'ارفع ملفاتك الصوتية للمحاضرات والدروس',
-      component: <AudioUploader />
+      component: <AudioUploader onFileUpload={handleFileUpload} onTranscriptGenerated={handleTranscriptGenerated} />
     },
     {
       id: 'youtube',
       title: 'استيراد من يوتيوب',
       icon: Youtube,
       description: 'استخرج المحتوى من مقاطع اليوتيوب التعليمية',
-      component: <YouTubeIntegration />
+      component: <YouTubeIntegration onTranscriptGenerated={handleTranscriptGenerated} />
     },
     {
       id: 'generator',
       title: 'مولد البطاقات الذكي',
       icon: Bot,
       description: 'استخدم الذكاء الاصطناعي لإنشاء بطاقات تعليمية',
-      component: <FlashcardGenerator />
+      component: <FlashcardGenerator 
+        transcript={transcript} 
+        onFlashcardsGenerated={handleFlashcardsGenerated}
+        isProcessing={isProcessing}
+        setIsProcessing={setIsProcessing}
+      />
     },
     {
       id: 'preview',
       title: 'معاينة البطاقات',
       icon: BookOpen,
       description: 'اعرض وراجع البطاقات المُنشأة',
-      component: <FlashcardPreview />
+      component: <FlashcardPreview flashcards={flashcards} onCardEdit={handleCardEdit} />
     },
     {
       id: 'editor',
       title: 'محرر البطاقات الذكي',
       icon: Bot,
       description: 'عدل وحسن البطاقات باستخدام الذكاء الاصطناعي',
-      component: <AICardEditor />
+      component: showEditor && selectedCard ? (
+        <AICardEditor 
+          card={selectedCard} 
+          onCardUpdate={handleCardUpdate} 
+          onClose={() => setShowEditor(false)} 
+        />
+      ) : (
+        <div className="text-center text-gray-500 py-8">
+          <Bot className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+          <p>اختر بطاقة من المعاينة لتحريرها</p>
+        </div>
+      )
     },
     {
       id: 'analytics',
       title: 'تحليل الأداء',
       icon: BarChart3,
       description: 'تتبع تقدمك ونتائج التعلم',
-      component: <AnalyticsDashboard />
+      component: <AnalyticsDashboard isVisible={showAnalytics} onClose={() => setShowAnalytics(false)} />
     },
     {
       id: 'recommendations',
       title: 'التوصيات الذكية',
       icon: Bot,
       description: 'احصل على توصيات مخصصة لتحسين التعلم',
-      component: <SmartRecommendationEngine />
+      component: <SmartRecommendationEngine transcript={transcript} onRecommendationsApply={handleRecommendationsApply} />
     },
     {
       id: 'personalization',
       title: 'التخصيص الشخصي',
       icon: Bot,
       description: 'خصص تجربة التعلم حسب احتياجاتك',
-      component: <FlashcardPersonalization />
+      component: <FlashcardPersonalization onStyleChange={handleStyleChange} />
     },
     {
       id: 'visual',
       title: 'البطاقات المرئية',
       icon: Bot,
       description: 'أنشئ بطاقات تحتوي على صور ومخططات',
-      component: <VisualFlashcardGenerator />
+      component: <VisualFlashcardGenerator transcript={transcript} onVisualCardsGenerated={handleVisualCardsGenerated} />
     },
     {
       id: 'community',
