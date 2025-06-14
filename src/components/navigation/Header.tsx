@@ -1,10 +1,8 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { BookOpen, User, Settings, LogOut } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { BookOpen, LogOut, Settings, User } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Header = () => {
@@ -19,58 +17,47 @@ const Header = () => {
     }
   };
 
-  const getUserInitials = () => {
-    if (user?.user_metadata?.display_name) {
-      return user.user_metadata.display_name.split(' ').map((n: string) => n[0]).join('');
-    }
-    return user?.email?.charAt(0).toUpperCase() || 'U';
-  };
-
   return (
-    <header className="bg-white border-b border-gray-200 px-4 py-3" dir="rtl">
-      <div className="flex items-center justify-between max-w-7xl mx-auto">
-        <div className="flex items-center gap-3">
-          <BookOpen className="h-8 w-8 text-blue-600" />
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">بنيان الذكي</h1>
-            <p className="text-sm text-gray-600">منصة البطاقات التعليمية الذكية</p>
+    <header className="bg-white/80 backdrop-blur-md border-b border-blue-200 sticky top-0 z-40">
+      <div className="container mx-auto px-4 py-4">
+        <div className="flex items-center justify-between">
+          {/* الشعار */}
+          <div className="flex items-center gap-3">
+            <BookOpen className="h-8 w-8 text-blue-600" />
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">بنيان الذكي</h1>
+              <p className="text-xs text-gray-600">منصة البطاقات التعليمية</p>
+            </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-4">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                <Avatar className="h-10 w-10">
-                  <AvatarFallback className="bg-blue-100 text-blue-600">
-                    {getUserInitials()}
-                  </AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end">
-              <DropdownMenuItem className="flex items-center gap-2">
-                <User className="h-4 w-4" />
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">
-                    {user?.user_metadata?.display_name || 'المستخدم'}
-                  </span>
-                  <span className="text-xs text-gray-500">{user?.email}</span>
-                </div>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="flex items-center gap-2">
-                <Settings className="h-4 w-4" />
-                الإعدادات
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                className="flex items-center gap-2 text-red-600"
-                onClick={handleSignOut}
-              >
-                <LogOut className="h-4 w-4" />
-                تسجيل الخروج
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* معلومات المستخدم والقائمة */}
+          {user && (
+            <div className="flex items-center gap-4">
+              <div className="hidden sm:flex items-center gap-2 text-sm">
+                <User className="h-4 w-4 text-gray-600" />
+                <span className="text-gray-700">
+                  {user.user_metadata?.display_name || user.email?.split('@')[0] || 'مستخدم'}
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <Settings className="h-4 w-4" />
+                  <span className="hidden sm:inline">الإعدادات</span>
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleSignOut}
+                  className="gap-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span className="hidden sm:inline">خروج</span>
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>

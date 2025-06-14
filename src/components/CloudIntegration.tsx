@@ -3,186 +3,239 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Cloud, Upload, Download, FolderOpen, CheckCircle } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Cloud, CloudDownload, CloudUpload, Smartphone, Monitor, Tablet, Sync, CheckCircle, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 const CloudIntegration = () => {
-  const [connectedServices, setConnectedServices] = useState<string[]>([]);
-  const [recentFiles, setRecentFiles] = useState([
-    { name: 'Machine Learning Lecture.mp3', service: 'gdrive', date: '2024-01-15' },
-    { name: 'Chemistry Notes.wav', service: 'onedrive', date: '2024-01-14' }
-  ]);
-  const [uploadProgress, setUploadProgress] = useState<{[key: string]: number}>({});
+  const [isConnected, setIsConnected] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSync, setLastSync] = useState("منذ 5 دقائق");
+  const [storageUsed, setStorageUsed] = useState(245);
+  const [storageLimit] = useState(1000);
 
-  const connectService = (service: string) => {
-    toast.info(`Connecting to ${service === 'gdrive' ? 'Google Drive' : 'OneDrive'}...`);
-    
-    // Simulate OAuth connection with progress
-    setTimeout(() => {
-      setConnectedServices(prev => [...prev, service]);
-      toast.success(`✅ Connected to ${service === 'gdrive' ? 'Google Drive' : 'OneDrive'}`);
-    }, 2000);
+  const devices = [
+    { id: "phone", name: "هاتف محمد", icon: Smartphone, lastSync: "منذ 2 دقائق", status: "متصل" },
+    { id: "laptop", name: "حاسوب المكتب", icon: Monitor, lastSync: "منذ 10 دقائق", status: "متصل" },
+    { id: "tablet", name: "الجهاز اللوحي", icon: Tablet, lastSync: "منذ ساعة", status: "غير متصل" }
+  ];
+
+  const cloudServices = [
+    { id: "google", name: "Google Drive", connected: true, storage: "15 GB متاح" },
+    { id: "dropbox", name: "Dropbox", connected: false, storage: "2 GB متاح" },
+    { id: "onedrive", name: "OneDrive", connected: false, storage: "5 GB متاح" }
+  ];
+
+  const handleConnect = (service: string) => {
+    setIsConnected(true);
+    toast.success(`تم الاتصال بـ ${service} بنجاح!`);
   };
 
-  const uploadToCloud = (service: string) => {
-    const serviceName = service === 'gdrive' ? 'Google Drive' : 'OneDrive';
-    setUploadProgress({...uploadProgress, [service]: 0});
+  const handleSync = async () => {
+    setIsSyncing(true);
     
-    // Simulate upload progress
-    const interval = setInterval(() => {
-      setUploadProgress(prev => {
-        const current = prev[service] || 0;
-        if (current >= 100) {
-          clearInterval(interval);
-          toast.success(`📁 Files successfully backed up to ${serviceName}`);
-          
-          // Add to recent files
-          const newFile = {
-            name: 'Current Session Backup.json',
-            service: service,
-            date: new Date().toISOString().split('T')[0]
-          };
-          setRecentFiles(prev => [newFile, ...prev]);
-          
-          return prev;
-        }
-        return {...prev, [service]: current + 10};
-      });
-    }, 200);
+    // محاكاة عملية المزامنة
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    setIsSyncing(false);
+    setLastSync("الآن");
+    toast.success("تم تحديث البطاقات عبر جميع الأجهزة!");
   };
 
-  const downloadFromCloud = (fileName: string, service: string) => {
-    toast.success(`📥 Downloading ${fileName} from ${service === 'gdrive' ? 'Google Drive' : 'OneDrive'}`);
+  const handleBackup = async () => {
+    setIsSyncing(true);
+    
+    // محاكاة عملية النسخ الاحتياطي
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    setIsSyncing(false);
+    toast.success("تم إنشاء نسخة احتياطية بنجاح!");
+  };
+
+  const handleRestore = async () => {
+    setIsSyncing(true);
+    
+    // محاكاة عملية الاستعادة
+    await new Promise(resolve => setTimeout(resolve, 2500));
+    
+    setIsSyncing(false);
+    toast.success("تم استعادة البطاقات من النسخة الاحتياطية!");
   };
 
   return (
-    <Card className="border-orange-200 bg-gradient-to-r from-orange-50 to-yellow-50">
+    <Card className="border-cyan-200 bg-gradient-to-r from-cyan-50 to-blue-50">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Cloud className="h-5 w-5" />
-          Cloud Storage Integration
-          {connectedServices.length > 0 && (
-            <Badge variant="default">{connectedServices.length} connected</Badge>
-          )}
+          التكامل السحابي
+          {isConnected && <Badge variant="secondary" className="bg-green-100 text-green-800">متصل</Badge>}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="p-4 border rounded-lg bg-white">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Cloud className="h-5 w-5 text-blue-600" />
-                <span className="font-medium">Google Drive</span>
-              </div>
-              {connectedServices.includes('gdrive') ? (
-                <Badge variant="default" className="gap-1">
-                  <CheckCircle className="h-3 w-3" />
-                  Connected
-                </Badge>
-              ) : (
-                <Button size="sm" onClick={() => connectService('gdrive')}>
-                  Connect
-                </Button>
-              )}
+      <CardContent className="space-y-6">
+        {/* حالة الاتصال */}
+        <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
+          <div className="flex items-center gap-3">
+            <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+            <div>
+              <h3 className="font-medium">حالة المزامنة</h3>
+              <p className="text-sm text-muted-foreground">آخر مزامنة: {lastSync}</p>
             </div>
-            {connectedServices.includes('gdrive') && (
-              <div className="space-y-2">
-                <Button variant="outline" size="sm" className="w-full gap-2">
-                  <Upload className="h-4 w-4" />
-                  Upload Files
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full gap-2" 
-                  onClick={() => uploadToCloud('gdrive')}
-                  disabled={uploadProgress.gdrive !== undefined && uploadProgress.gdrive < 100}
-                >
-                  <Download className="h-4 w-4" />
-                  {uploadProgress.gdrive !== undefined && uploadProgress.gdrive < 100 
-                    ? `Uploading... ${uploadProgress.gdrive}%` 
-                    : 'Backup Session'
-                  }
-                </Button>
-              </div>
-            )}
           </div>
+          <Button 
+            onClick={handleSync}
+            disabled={isSyncing || !isConnected}
+            className="gap-2"
+          >
+            <Sync className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+            {isSyncing ? 'جاري المزامنة...' : 'مزامنة الآن'}
+          </Button>
+        </div>
 
-          <div className="p-4 border rounded-lg bg-white">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Cloud className="h-5 w-5 text-blue-500" />
-                <span className="font-medium">OneDrive</span>
-              </div>
-              {connectedServices.includes('onedrive') ? (
-                <Badge variant="default" className="gap-1">
-                  <CheckCircle className="h-3 w-3" />
-                  Connected
-                </Badge>
-              ) : (
-                <Button size="sm" onClick={() => connectService('onedrive')}>
-                  Connect
-                </Button>
-              )}
-            </div>
-            {connectedServices.includes('onedrive') && (
-              <div className="space-y-2">
-                <Button variant="outline" size="sm" className="w-full gap-2">
-                  <Upload className="h-4 w-4" />
-                  Upload Files
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full gap-2" 
-                  onClick={() => uploadToCloud('onedrive')}
-                  disabled={uploadProgress.onedrive !== undefined && uploadProgress.onedrive < 100}
-                >
-                  <Download className="h-4 w-4" />
-                  {uploadProgress.onedrive !== undefined && uploadProgress.onedrive < 100 
-                    ? `Uploading... ${uploadProgress.onedrive}%` 
-                    : 'Backup Session'
-                  }
-                </Button>
-              </div>
-            )}
+        {/* مساحة التخزين */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-medium">مساحة التخزين</h3>
+            <span className="text-sm text-muted-foreground">
+              {storageUsed} MB من {storageLimit} MB
+            </span>
+          </div>
+          <Progress value={(storageUsed / storageLimit) * 100} className="h-2" />
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>البطاقات: 180 MB</span>
+            <span>الصور: 45 MB</span>
+            <span>الصوت: 20 MB</span>
           </div>
         </div>
 
-        {connectedServices.length > 0 && (
-          <div className="space-y-3">
-            <h4 className="font-medium flex items-center gap-2">
-              <FolderOpen className="h-4 w-4" />
-              Recent Files ({recentFiles.length})
-            </h4>
-            {recentFiles.map((file, index) => (
-              <div key={index} className="flex items-center justify-between p-2 border rounded bg-white hover:bg-gray-50 transition-colors">
-                <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${file.service === 'gdrive' ? 'bg-blue-500' : 'bg-blue-400'}`} />
-                  <span className="text-sm">{file.name}</span>
+        {/* الخدمات السحابية */}
+        <div className="space-y-3">
+          <h3 className="font-medium">الخدمات السحابية</h3>
+          <div className="space-y-2">
+            {cloudServices.map((service) => (
+              <div key={service.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                    service.connected ? 'bg-green-100' : 'bg-gray-100'
+                  }`}>
+                    <Cloud className={`h-4 w-4 ${service.connected ? 'text-green-600' : 'text-gray-400'}`} />
+                  </div>
+                  <div>
+                    <h4 className="font-medium">{service.name}</h4>
+                    <p className="text-sm text-muted-foreground">{service.storage}</p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">{file.date}</span>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    onClick={() => downloadFromCloud(file.name, file.service)}
-                    className="h-6 px-2"
-                  >
-                    <Download className="h-3 w-3" />
-                  </Button>
-                </div>
+                <Button
+                  variant={service.connected ? "outline" : "default"}
+                  size="sm"
+                  onClick={() => handleConnect(service.name)}
+                  disabled={service.connected}
+                >
+                  {service.connected ? 'متصل' : 'اتصال'}
+                </Button>
               </div>
             ))}
           </div>
-        )}
+        </div>
 
-        {connectedServices.length === 0 && (
-          <div className="text-center py-6 text-muted-foreground">
-            <Cloud className="h-12 w-12 mx-auto mb-2 opacity-30" />
-            <p>Connect your cloud storage to backup and sync flashcards</p>
+        {/* الأجهزة المتصلة */}
+        <div className="space-y-3">
+          <h3 className="font-medium">الأجهزة المتصلة</h3>
+          <div className="space-y-2">
+            {devices.map((device) => {
+              const Icon = device.icon;
+              return (
+                <div key={device.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Icon className="h-5 w-5 text-blue-600" />
+                    <div>
+                      <h4 className="font-medium">{device.name}</h4>
+                      <p className="text-sm text-muted-foreground">آخر مزامنة: {device.lastSync}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {device.status === "متصل" ? (
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <AlertCircle className="h-4 w-4 text-orange-600" />
+                    )}
+                    <span className={`text-sm ${
+                      device.status === "متصل" ? 'text-green-600' : 'text-orange-600'
+                    }`}>
+                      {device.status}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        )}
+        </div>
+
+        {/* النسخ الاحتياطي والاستعادة */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Card>
+            <CardContent className="p-4 text-center">
+              <CloudUpload className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+              <h4 className="font-medium mb-2">النسخ الاحتياطي</h4>
+              <p className="text-sm text-muted-foreground mb-3">
+                احفظ نسخة من بطاقاتك في السحابة
+              </p>
+              <Button 
+                onClick={handleBackup}
+                disabled={isSyncing || !isConnected}
+                size="sm" 
+                className="w-full"
+              >
+                إنشاء نسخة احتياطية
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4 text-center">
+              <CloudDownload className="h-8 w-8 text-green-600 mx-auto mb-2" />
+              <h4 className="font-medium mb-2">الاستعادة</h4>
+              <p className="text-sm text-muted-foreground mb-3">
+                استعد بطاقاتك من النسخة الاحتياطية
+              </p>
+              <Button 
+                onClick={handleRestore}
+                disabled={isSyncing || !isConnected}
+                size="sm" 
+                variant="outline" 
+                className="w-full"
+              >
+                استعادة البطاقات
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* إعدادات المزامنة */}
+        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+          <CardContent className="p-4">
+            <h4 className="font-medium mb-3">إعدادات المزامنة التلقائية</h4>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center justify-between">
+                <span>مزامنة تلقائية عند إضافة بطاقات جديدة</span>
+                <div className="w-8 h-4 bg-blue-500 rounded-full relative">
+                  <div className="w-3 h-3 bg-white rounded-full absolute top-0.5 right-0.5"></div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>حفظ الصور والملفات الصوتية</span>
+                <div className="w-8 h-4 bg-blue-500 rounded-full relative">
+                  <div className="w-3 h-3 bg-white rounded-full absolute top-0.5 right-0.5"></div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>مزامنة الإحصائيات والتقدم</span>
+                <div className="w-8 h-4 bg-gray-300 rounded-full relative">
+                  <div className="w-3 h-3 bg-white rounded-full absolute top-0.5 left-0.5"></div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </CardContent>
     </Card>
   );

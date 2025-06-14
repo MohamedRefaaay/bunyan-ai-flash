@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,30 +9,29 @@ import { Brain, Wand2, CheckCircle, XCircle, Lightbulb, RefreshCw } from "lucide
 import { toast } from "sonner";
 import type { Flashcard } from "@/types/flashcard";
 
+interface AISuggestion {
+  id: string;
+  type: "improve" | "rephrase" | "difficulty";
+  title: string;
+  description: string;
+  newFront?: string;
+  newBack?: string;
+  newDifficulty?: string;
+}
+
 interface AICardEditorProps {
   card: Flashcard;
-  onCardUpdate: (updatedCard: Flashcard) => void;
+  onCardUpdate: (card: Flashcard) => void;
   onClose: () => void;
 }
 
-interface AISuggestion {
-  id: string;
-  type: "improve" | "simplify" | "cloze" | "mcq" | "reverse";
-  title: string;
-  description: string;
-  suggestedFront: string;
-  suggestedBack: string;
-  suggestedType?: "basic" | "cloze" | "mcq";
-}
-
 const AICardEditor = ({ card, onCardUpdate, onClose }: AICardEditorProps) => {
-  // Add safety check for card
   if (!card) {
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
         <div className="bg-white dark:bg-gray-900 rounded-lg p-6">
-          <p>No card selected for editing.</p>
-          <Button onClick={onClose}>Close</Button>
+          <p>لم يتم اختيار بطاقة للتحرير.</p>
+          <Button onClick={onClose}>إغلاق</Button>
         </div>
       </div>
     );
@@ -40,256 +40,210 @@ const AICardEditor = ({ card, onCardUpdate, onClose }: AICardEditorProps) => {
   const [editedCard, setEditedCard] = useState<Flashcard>(card);
   const [aiSuggestions, setAiSuggestions] = useState<AISuggestion[]>([]);
   const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
-  const [selectedSuggestion, setSelectedSuggestion] = useState<string | null>(null);
 
   const generateAISuggestions = async () => {
     setIsGeneratingSuggestions(true);
     
-    try {
-      // Simulate AI suggestion generation
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const suggestions: AISuggestion[] = [
-        {
-          id: "improve",
-          type: "improve",
-          title: "Improve Clarity",
-          description: "Make the question more specific and clear",
-          suggestedFront: `What are the three main categories of machine learning, and what distinguishes each category from the others?`,
-          suggestedBack: editedCard.back
-        },
-        {
-          id: "simplify", 
-          type: "simplify",
-          title: "Simplify Language",
-          description: "Use simpler terms for better understanding",
-          suggestedFront: `What are the 3 types of machine learning?`,
-          suggestedBack: `1. Supervised learning - learns from examples with answers\n2. Unsupervised learning - finds patterns without answers\n3. Reinforcement learning - learns through trial and error`
-        },
-        {
-          id: "cloze",
-          type: "cloze", 
-          title: "Convert to Cloze",
-          description: "Transform into a fill-in-the-blank format",
-          suggestedFront: `The three main types of machine learning are {{c1::supervised learning}}, {{c2::unsupervised learning}}, and {{c3::reinforcement learning}}.`,
-          suggestedBack: "supervised learning, unsupervised learning, reinforcement learning",
-          suggestedType: "cloze"
-        },
-        {
-          id: "mcq",
-          type: "mcq",
-          title: "Convert to Multiple Choice",
-          description: "Create a multiple choice question",
-          suggestedFront: `Which of the following is NOT a type of machine learning?\nA) Supervised learning\nB) Unsupervised learning\nC) Reinforcement learning\nD) Reactive learning`,
-          suggestedBack: "D) Reactive learning",
-          suggestedType: "mcq"
-        },
-        {
-          id: "reverse",
-          type: "reverse",
-          title: "Reverse Question",
-          description: "Flip the question and answer",
-          suggestedFront: `Given these learning approaches: learning from labeled data, finding patterns in unlabeled data, and learning through rewards - what are these called in machine learning?`,
-          suggestedBack: "These are the three main types of machine learning: supervised learning, unsupervised learning, and reinforcement learning"
-        }
-      ];
-      
-      setAiSuggestions(suggestions);
-      toast.success("AI suggestions generated!");
-      
-    } catch (error) {
-      console.error("Error generating suggestions:", error);
-      toast.error("Failed to generate AI suggestions");
-    } finally {
-      setIsGeneratingSuggestions(false);
-    }
+    // محاكاة توليد اقتراحات الذكاء الاصطناعي
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    const suggestions: AISuggestion[] = [
+      {
+        id: "suggest-1",
+        type: "improve",
+        title: "تحسين الوضوح",
+        description: "جعل السؤال أكثر وضوحاً ومباشرة",
+        newFront: "ما هو التعريف الدقيق للمفهوم الأساسي؟",
+        newBack: "إجابة محسنة ومفصلة أكثر مع أمثلة توضيحية."
+      },
+      {
+        id: "suggest-2",
+        type: "rephrase",
+        title: "إعادة صياغة",
+        description: "صياغة أفضل باللغة العربية",
+        newFront: "اشرح المفهوم الأساسي بطريقة مبسطة",
+        newBack: "شرح مبسط ومفهوم للمفهوم مع استخدام كلمات واضحة."
+      },
+      {
+        id: "suggest-3",
+        type: "difficulty",
+        title: "تعديل مستوى الصعوبة",
+        description: "جعل البطاقة أكثر تحدياً",
+        newDifficulty: "hard"
+      }
+    ];
+    
+    setAiSuggestions(suggestions);
+    setIsGeneratingSuggestions(false);
+    toast.success("تم توليد الاقتراحات الذكية!");
   };
 
   const applySuggestion = (suggestion: AISuggestion) => {
-    const updatedCard = {
-      ...editedCard,
-      front: suggestion.suggestedFront,
-      back: suggestion.suggestedBack,
-      type: suggestion.suggestedType || editedCard.type
-    };
+    const updatedCard = { ...editedCard };
+    
+    if (suggestion.newFront) updatedCard.front = suggestion.newFront;
+    if (suggestion.newBack) updatedCard.back = suggestion.newBack;
+    if (suggestion.newDifficulty) updatedCard.difficulty = suggestion.newDifficulty as "easy" | "medium" | "hard";
+    
     setEditedCard(updatedCard);
-    setSelectedSuggestion(suggestion.id);
-    toast.success("Suggestion applied!");
+    toast.success("تم تطبيق الاقتراح!");
   };
 
   const saveCard = () => {
     onCardUpdate(editedCard);
-    toast.success("Card updated successfully!");
-    onClose();
-  };
-
-  const getSuggestionIcon = (type: string) => {
-    switch (type) {
-      case "improve": return <Lightbulb className="h-4 w-4" />;
-      case "simplify": return <RefreshCw className="h-4 w-4" />;
-      case "cloze": return <Brain className="h-4 w-4" />;
-      case "mcq": return <CheckCircle className="h-4 w-4" />;
-      case "reverse": return <RefreshCw className="h-4 w-4" />;
-      default: return <Wand2 className="h-4 w-4" />;
-    }
+    toast.success("تم حفظ البطاقة بنجاح!");
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-900 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b flex justify-between items-center">
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <Brain className="h-5 w-5 text-purple-600" />
-            AI Card Editor
-          </h2>
-          <Button variant="ghost" onClick={onClose}>✕</Button>
-        </div>
-
-        <div className="p-6 space-y-6">
-          {/* Card Editor */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium mb-2 block">Question (Front)</label>
-                <Textarea
-                  value={editedCard.front || ""}
-                  onChange={(e) => setEditedCard({...editedCard, front: e.target.value})}
-                  className="min-h-[120px]"
-                  placeholder="Enter your question..."
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-2 block">Answer (Back)</label>
-                <Textarea
-                  value={editedCard.back || ""}
-                  onChange={(e) => setEditedCard({...editedCard, back: e.target.value})}
-                  className="min-h-[120px]"
-                  placeholder="Enter your answer..."
-                />
-              </div>
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <label className="text-sm font-medium mb-2 block">Type</label>
-                  <Select 
-                    value={editedCard.type} 
-                    onValueChange={(value: any) => setEditedCard({...editedCard, type: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="basic">Basic Q&A</SelectItem>
-                      <SelectItem value="cloze">Cloze Deletion</SelectItem>
-                      <SelectItem value="mcq">Multiple Choice</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex-1">
-                  <label className="text-sm font-medium mb-2 block">Difficulty</label>
-                  <Select 
-                    value={editedCard.difficulty} 
-                    onValueChange={(value: any) => setEditedCard({...editedCard, difficulty: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="easy">Easy</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="hard">Hard</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-
-            {/* AI Suggestions */}
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="font-semibold">AI Suggestions</h3>
-                <Button 
-                  onClick={generateAISuggestions}
-                  disabled={isGeneratingSuggestions}
-                  size="sm"
-                  className="gap-2"
-                >
-                  {isGeneratingSuggestions ? (
-                    <>
-                      <Brain className="h-4 w-4 animate-pulse" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Wand2 className="h-4 w-4" />
-                      Get Suggestions
-                    </>
-                  )}
-                </Button>
-              </div>
-
-              {aiSuggestions.length > 0 && (
-                <div className="space-y-3 max-h-[400px] overflow-y-auto">
-                  {aiSuggestions.map((suggestion) => (
-                    <Card 
-                      key={suggestion.id} 
-                      className={`cursor-pointer transition-all ${
-                        selectedSuggestion === suggestion.id 
-                          ? 'ring-2 ring-purple-500 bg-purple-50 dark:bg-purple-950' 
-                          : 'hover:shadow-md'
-                      }`}
-                    >
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm flex items-center justify-between">
-                          <span className="flex items-center gap-2">
-                            {getSuggestionIcon(suggestion.type)}
-                            {suggestion.title}
-                          </span>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => applySuggestion(suggestion)}
-                              className="h-6 px-2"
-                            >
-                              <CheckCircle className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="pt-0">
-                        <p className="text-xs text-muted-foreground mb-2">{suggestion.description}</p>
-                        <div className="space-y-1 text-xs">
-                          <div>
-                            <span className="font-medium">Q:</span> {suggestion.suggestedFront.substring(0, 80)}...
-                          </div>
-                          <div>
-                            <span className="font-medium">A:</span> {suggestion.suggestedBack.substring(0, 80)}...
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-
-              {aiSuggestions.length === 0 && !isGeneratingSuggestions && (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Brain className="h-12 w-12 mx-auto mb-2 opacity-30" />
-                  <p>Click "Get Suggestions" to see AI recommendations</p>
-                </div>
-              )}
+        <div className="sticky top-0 bg-white dark:bg-gray-900 border-b p-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold flex items-center gap-2">
+              <Brain className="h-5 w-5" />
+              محرر البطاقات الذكي
+            </h2>
+            <div className="flex gap-2">
+              <Button onClick={saveCard} className="gap-2">
+                <CheckCircle className="h-4 w-4" />
+                حفظ
+              </Button>
+              <Button variant="outline" onClick={onClose}>
+                <XCircle className="h-4 w-4" />
+                إلغاء
+              </Button>
             </div>
           </div>
+        </div>
 
-          {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button onClick={saveCard} className="gap-2">
-              <CheckCircle className="h-4 w-4" />
-              Save Changes
-            </Button>
+        <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* تحرير البطاقة */}
+          <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>تحرير البطاقة</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">السؤال (الوجه الأمامي)</label>
+                  <Textarea
+                    value={editedCard.front || ""}
+                    onChange={(e) => setEditedCard({...editedCard, front: e.target.value})}
+                    className="min-h-[120px]"
+                    placeholder="أدخل سؤالك هنا..."
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">الإجابة (الوجه الخلفي)</label>
+                  <Textarea
+                    value={editedCard.back || ""}
+                    onChange={(e) => setEditedCard({...editedCard, back: e.target.value})}
+                    className="min-h-[120px]"
+                    placeholder="أدخل إجابتك هنا..."
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">النوع</label>
+                    <Select 
+                      value={editedCard.type} 
+                      onValueChange={(value) => setEditedCard({...editedCard, type: value as "basic" | "cloze" | "mcq"})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="basic">أساسي</SelectItem>
+                        <SelectItem value="cloze">ملء الفراغات</SelectItem>
+                        <SelectItem value="mcq">اختيار متعدد</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">الصعوبة</label>
+                    <Select 
+                      value={editedCard.difficulty} 
+                      onValueChange={(value) => setEditedCard({...editedCard, difficulty: value as "easy" | "medium" | "hard"})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="easy">سهل</SelectItem>
+                        <SelectItem value="medium">متوسط</SelectItem>
+                        <SelectItem value="hard">صعب</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* الاقتراحات الذكية */}
+          <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Lightbulb className="h-5 w-5" />
+                    الاقتراحات الذكية
+                  </CardTitle>
+                  <Button 
+                    onClick={generateAISuggestions}
+                    disabled={isGeneratingSuggestions}
+                    size="sm"
+                    className="gap-2"
+                  >
+                    {isGeneratingSuggestions ? (
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Wand2 className="h-4 w-4" />
+                    )}
+                    توليد اقتراحات
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {aiSuggestions.length === 0 ? (
+                  <div className="text-center text-muted-foreground py-8">
+                    <Lightbulb className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p>اضغط على "توليد اقتراحات" للحصول على تحسينات ذكية</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {aiSuggestions.map((suggestion) => (
+                      <div key={suggestion.id} className="border rounded-lg p-3">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <h4 className="font-medium">{suggestion.title}</h4>
+                            <p className="text-sm text-muted-foreground">{suggestion.description}</p>
+                          </div>
+                          <Button 
+                            size="sm" 
+                            onClick={() => applySuggestion(suggestion)}
+                            className="gap-1"
+                          >
+                            <CheckCircle className="h-3 w-3" />
+                            تطبيق
+                          </Button>
+                        </div>
+                        {suggestion.newFront && (
+                          <div className="mt-2 p-2 bg-green-50 rounded text-sm">
+                            <strong>سؤال جديد:</strong> {suggestion.newFront}
+                          </div>
+                        )}
+                        {suggestion.newBack && (
+                          <div className="mt-2 p-2 bg-blue-50 rounded text-sm">
+                            <strong>إجابة جديدة:</strong> {suggestion.newBack}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
