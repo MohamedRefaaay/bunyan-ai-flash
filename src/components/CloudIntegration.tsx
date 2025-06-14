@@ -4,15 +4,62 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Cloud, CloudDownload, CloudUpload, Smartphone, Monitor, Tablet, Sync, CheckCircle, AlertCircle } from 'lucide-react';
+import { Cloud, CloudDownload, CloudUpload, Smartphone, Monitor, Tablet, RefreshCw, CheckCircle, AlertCircle, FileText, Image, Video, Music, FolderOpen } from 'lucide-react';
 import { toast } from 'sonner';
 
 const CloudIntegration = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [lastSync, setLastSync] = useState("منذ 5 دقائق");
   const [storageUsed, setStorageUsed] = useState(245);
   const [storageLimit] = useState(1000);
+  const [driveFiles, setDriveFiles] = useState([]);
+  const [showFileImporter, setShowFileImporter] = useState(false);
+
+  // محاكاة ملفات Google Drive
+  const mockDriveFiles = [
+    { 
+      id: '1', 
+      name: 'محاضرة الرياضيات.pdf', 
+      type: 'application/pdf', 
+      size: '2.5 MB',
+      icon: FileText,
+      modifiedTime: '2024-01-15'
+    },
+    { 
+      id: '2', 
+      name: 'شرح الفيزياء.mp4', 
+      type: 'video/mp4', 
+      size: '45 MB',
+      icon: Video,
+      modifiedTime: '2024-01-14'
+    },
+    { 
+      id: '3', 
+      name: 'تسجيل المحاضرة.mp3', 
+      type: 'audio/mp3', 
+      size: '15 MB',
+      icon: Music,
+      modifiedTime: '2024-01-13'
+    },
+    { 
+      id: '4', 
+      name: 'ملاحظات الكيمياء.docx', 
+      type: 'application/docx', 
+      size: '1.2 MB',
+      icon: FileText,
+      modifiedTime: '2024-01-12'
+    },
+    { 
+      id: '5', 
+      name: 'صور التجارب.jpg', 
+      type: 'image/jpeg', 
+      size: '3.8 MB',
+      icon: Image,
+      modifiedTime: '2024-01-11'
+    }
+  ];
 
   const devices = [
     { id: "phone", name: "هاتف محمد", icon: Smartphone, lastSync: "منذ 2 دقائق", status: "متصل" },
@@ -40,6 +87,43 @@ const CloudIntegration = () => {
     setIsSyncing(false);
     setLastSync("الآن");
     toast.success("تم تحديث البطاقات عبر جميع الأجهزة!");
+  };
+
+  const handleBrowseDrive = async () => {
+    if (!isConnected) {
+      toast.error("يجب الاتصال بـ Google Drive أولاً");
+      return;
+    }
+
+    setIsImporting(true);
+    // محاكاة جلب الملفات من Drive
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    setDriveFiles(mockDriveFiles);
+    setShowFileImporter(true);
+    setIsImporting(false);
+    toast.success("تم جلب ملفاتك من Google Drive");
+  };
+
+  const handleImportFile = async (file: any) => {
+    setIsImporting(true);
+    
+    // محاكاة استيراد الملف
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    setIsImporting(false);
+    toast.success(`تم استيراد ${file.name} بنجاح!`);
+  };
+
+  const handleImportSelected = async () => {
+    setIsImporting(true);
+    
+    // محاكاة استيراد جميع الملفات المحددة
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    setIsImporting(false);
+    setShowFileImporter(false);
+    toast.success("تم استيراد جميع الملفات المحددة!");
   };
 
   const handleBackup = async () => {
@@ -86,10 +170,76 @@ const CloudIntegration = () => {
             disabled={isSyncing || !isConnected}
             className="gap-2"
           >
-            <Sync className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
             {isSyncing ? 'جاري المزامنة...' : 'مزامنة الآن'}
           </Button>
         </div>
+
+        {/* استيراد الملفات من Google Drive */}
+        <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <FolderOpen className="h-6 w-6 text-green-600" />
+                <div>
+                  <h3 className="font-medium">استيراد من Google Drive</h3>
+                  <p className="text-sm text-muted-foreground">استورد ملفاتك التعليمية مباشرة</p>
+                </div>
+              </div>
+              <Button 
+                onClick={handleBrowseDrive}
+                disabled={isImporting || !isConnected}
+                className="gap-2"
+              >
+                <CloudDownload className="h-4 w-4" />
+                {isImporting ? 'جاري التحميل...' : 'تصفح الملفات'}
+              </Button>
+            </div>
+
+            {showFileImporter && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium">ملفاتك في Google Drive</h4>
+                  <Button 
+                    onClick={handleImportSelected}
+                    disabled={isImporting}
+                    size="sm"
+                    className="gap-2"
+                  >
+                    <CloudDownload className="h-4 w-4" />
+                    استيراد المحدد
+                  </Button>
+                </div>
+                
+                <div className="max-h-60 overflow-y-auto space-y-2">
+                  {driveFiles.map((file: any) => {
+                    const Icon = file.icon;
+                    return (
+                      <div key={file.id} className="flex items-center justify-between p-3 bg-white rounded-lg border hover:shadow-sm transition-shadow">
+                        <div className="flex items-center gap-3">
+                          <input type="checkbox" className="rounded" />
+                          <Icon className="h-5 w-5 text-blue-600" />
+                          <div>
+                            <p className="font-medium text-sm">{file.name}</p>
+                            <p className="text-xs text-muted-foreground">{file.size} • {file.modifiedTime}</p>
+                          </div>
+                        </div>
+                        <Button
+                          onClick={() => handleImportFile(file)}
+                          disabled={isImporting}
+                          size="sm"
+                          variant="outline"
+                        >
+                          استيراد
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* مساحة التخزين */}
         <div className="space-y-3">
