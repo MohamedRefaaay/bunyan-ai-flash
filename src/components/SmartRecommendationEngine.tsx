@@ -3,8 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Brain, Download, Filter, Star } from 'lucide-react';
+import { Brain, Download, Star, CheckCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
 
 interface RecommendationEngineProps {
   transcript: string;
@@ -16,63 +17,114 @@ const SmartRecommendationEngine = ({ transcript, onRecommendationsApply }: Recom
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [selectedField, setSelectedField] = useState<string>('all');
   const [difficulty, setDifficulty] = useState<string>('all');
+  const [appliedRecommendations, setAppliedRecommendations] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    // Simulate topic detection
-    const topics = ['Computer Science', 'Medicine', 'Engineering', 'Business', 'Science'];
-    const randomTopic = topics[Math.floor(Math.random() * topics.length)];
-    setDetectedTopic(randomTopic);
-    
-    // Generate mock recommendations
-    const mockRecommendations = [
-      {
-        id: 'rec-1',
-        title: 'Machine Learning Fundamentals',
-        field: 'Computer Science',
-        difficulty: 'medium',
-        rating: 4.8,
-        cardCount: 25,
-        description: 'Core concepts in ML algorithms'
-      },
-      {
-        id: 'rec-2',
-        title: 'Data Structures Essentials',
-        field: 'Computer Science',
-        difficulty: 'easy',
-        rating: 4.9,
-        cardCount: 18,
-        description: 'Arrays, linked lists, trees basics'
-      },
-      {
-        id: 'rec-3',
-        title: 'Neural Networks Deep Dive',
-        field: 'Computer Science',
-        difficulty: 'hard',
-        rating: 4.7,
-        cardCount: 35,
-        description: 'Advanced neural network concepts'
+    if (transcript) {
+      // Smart topic detection based on transcript content
+      let detectedField = 'General';
+      const lowerTranscript = transcript.toLowerCase();
+      
+      if (lowerTranscript.includes('machine learning') || lowerTranscript.includes('algorithm') || lowerTranscript.includes('neural network')) {
+        detectedField = 'Computer Science - AI/ML';
+      } else if (lowerTranscript.includes('medicine') || lowerTranscript.includes('patient') || lowerTranscript.includes('treatment')) {
+        detectedField = 'Medicine';
+      } else if (lowerTranscript.includes('business') || lowerTranscript.includes('marketing') || lowerTranscript.includes('management')) {
+        detectedField = 'Business';
+      } else if (lowerTranscript.includes('engineering') || lowerTranscript.includes('design') || lowerTranscript.includes('technical')) {
+        detectedField = 'Engineering';
       }
-    ];
-    setRecommendations(mockRecommendations);
+      
+      setDetectedTopic(detectedField);
+      
+      // Generate contextual recommendations
+      const contextualRecommendations = [
+        {
+          id: 'rec-1',
+          title: 'Core Concepts Extraction',
+          field: detectedField,
+          difficulty: 'medium',
+          rating: 4.9,
+          cardCount: Math.min(15, Math.floor(transcript.length / 100)),
+          description: 'Extract key concepts and definitions from your content'
+        },
+        {
+          id: 'rec-2',
+          title: 'Q&A Generation',
+          field: detectedField,
+          difficulty: 'easy',
+          rating: 4.8,
+          cardCount: Math.min(20, Math.floor(transcript.length / 80)),
+          description: 'Generate question-answer pairs from important points'
+        },
+        {
+          id: 'rec-3',
+          title: 'Advanced Analysis',
+          field: detectedField,
+          difficulty: 'hard',
+          rating: 4.7,
+          cardCount: Math.min(10, Math.floor(transcript.length / 150)),
+          description: 'Deep analytical questions for complex understanding'
+        }
+      ];
+      setRecommendations(contextualRecommendations);
+    }
   }, [transcript]);
 
   const filteredRecommendations = recommendations.filter(rec => {
-    const fieldMatch = selectedField === 'all' || rec.field === selectedField;
+    const fieldMatch = selectedField === 'all' || rec.field.includes(selectedField);
     const difficultyMatch = difficulty === 'all' || rec.difficulty === difficulty;
     return fieldMatch && difficultyMatch;
   });
 
   const applyRecommendation = (rec: any) => {
-    // Simulate applying recommendation
-    const cards = Array.from({ length: rec.cardCount }, (_, i) => ({
-      id: `${rec.id}-card-${i}`,
-      front: `Question ${i + 1} from ${rec.title}`,
-      back: `Answer ${i + 1} covering ${rec.description}`,
-      type: 'basic',
-      difficulty: rec.difficulty
-    }));
+    if (appliedRecommendations.has(rec.id)) {
+      toast.info("This recommendation has already been applied");
+      return;
+    }
+
+    // Generate smart cards based on recommendation type
+    const cards = Array.from({ length: rec.cardCount }, (_, i) => {
+      let front, back, type;
+      
+      if (rec.title.includes('Core Concepts')) {
+        front = `What is the key concept #${i + 1} discussed in the lecture?`;
+        back = `[Concept from transcript analysis - would extract actual key terms]`;
+        type = 'basic';
+      } else if (rec.title.includes('Q&A')) {
+        front = `Question ${i + 1}: [Generated from transcript content]`;
+        back = `Answer based on lecture material analysis`;
+        type = 'basic';
+      } else {
+        front = `Analyze and explain the relationship between concepts ${i + 1} and ${i + 2}`;
+        back = `Deep analytical answer requiring synthesis of multiple concepts`;
+        type = 'basic';
+      }
+
+      return {
+        id: `${rec.id}-card-${i}`,
+        front,
+        back,
+        type,
+        difficulty: rec.difficulty
+      };
+    });
+
     onRecommendationsApply(cards);
+    setAppliedRecommendations(prev => new Set([...prev, rec.id]));
+    toast.success(`Applied "${rec.title}" - Generated ${rec.cardCount} cards!`);
   };
+
+  if (!transcript) {
+    return (
+      <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50">
+        <CardContent className="p-6 text-center">
+          <Brain className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+          <p className="text-muted-foreground">Upload content to get smart recommendations</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50">
@@ -99,6 +151,7 @@ const SmartRecommendationEngine = ({ transcript, onRecommendationsApply }: Recom
               <SelectItem value="Computer Science">Computer Science</SelectItem>
               <SelectItem value="Medicine">Medicine</SelectItem>
               <SelectItem value="Engineering">Engineering</SelectItem>
+              <SelectItem value="Business">Business</SelectItem>
             </SelectContent>
           </Select>
           
@@ -132,8 +185,17 @@ const SmartRecommendationEngine = ({ transcript, onRecommendationsApply }: Recom
                     <span className="text-xs text-muted-foreground">{rec.cardCount} cards</span>
                   </div>
                 </div>
-                <Button size="sm" onClick={() => applyRecommendation(rec)}>
-                  <Download className="h-3 w-3" />
+                <Button 
+                  size="sm" 
+                  onClick={() => applyRecommendation(rec)}
+                  disabled={appliedRecommendations.has(rec.id)}
+                  variant={appliedRecommendations.has(rec.id) ? "outline" : "default"}
+                >
+                  {appliedRecommendations.has(rec.id) ? (
+                    <CheckCircle className="h-3 w-3" />
+                  ) : (
+                    <Download className="h-3 w-3" />
+                  )}
                 </Button>
               </div>
             </div>

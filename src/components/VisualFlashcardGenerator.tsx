@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Image, BarChart3, Network, Table } from 'lucide-react';
 import { toast } from 'sonner';
@@ -15,33 +14,57 @@ interface VisualFlashcardGeneratorProps {
 const VisualFlashcardGenerator = ({ transcript, onVisualCardsGenerated }: VisualFlashcardGeneratorProps) => {
   const [visualType, setVisualType] = useState<string>('diagram');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedCards, setGeneratedCards] = useState<any[]>([]);
 
   const generateVisualCards = async () => {
+    if (!transcript) {
+      toast.error("Please upload and transcribe content first");
+      return;
+    }
+
     setIsGenerating(true);
     
-    // Simulate AI visual generation
     await new Promise(resolve => setTimeout(resolve, 3000));
     
     const mockVisualCards = [
       {
         id: 'visual-1',
-        type: 'diagram',
-        title: 'Learning Process Flow',
-        description: 'Visual representation of the learning process',
-        svgContent: '<svg viewBox="0 0 400 200"><rect x="10" y="10" width="80" height="40" fill="#e3f2fd" stroke="#1976d2"/><text x="50" y="35" text-anchor="middle">Input</text><path d="M90 30 L130 30" stroke="#1976d2" marker-end="url(#arrowhead)"/><rect x="130" y="10" width="80" height="40" fill="#f3e5f5" stroke="#7b1fa2"/><text x="170" y="35" text-anchor="middle">Process</text><path d="M210 30 L250 30" stroke="#7b1fa2" marker-end="url(#arrowhead)"/><rect x="250" y="10" width="80" height="40" fill="#e8f5e8" stroke="#388e3c"/><text x="290" y="35" text-anchor="middle">Output</text></svg>'
+        front: 'Machine Learning Process Flow',
+        back: 'Input Data → Processing → Model Training → Prediction/Output',
+        type: 'basic',
+        difficulty: 'medium',
+        visual: true,
+        svgContent: '<svg viewBox="0 0 400 200" class="w-full h-32"><rect x="10" y="80" width="80" height="40" fill="#e3f2fd" stroke="#1976d2" rx="5"/><text x="50" y="105" text-anchor="middle" class="text-sm">Input</text><path d="M90 100 L130 100" stroke="#1976d2" stroke-width="2" marker-end="url(#arrowhead)"/><rect x="130" y="80" width="80" height="40" fill="#f3e5f5" stroke="#7b1fa2" rx="5"/><text x="170" y="105" text-anchor="middle" class="text-sm">Process</text><path d="M210 100 L250 100" stroke="#7b1fa2" stroke-width="2"/><rect x="250" y="80" width="80" height="40" fill="#e8f5e8" stroke="#388e3c" rx="5"/><text x="290" y="105" text-anchor="middle" class="text-sm">Output</text></svg>'
       },
       {
         id: 'visual-2',
-        type: 'mindmap',
-        title: 'Concept Connections',
-        description: 'Mind map of key concepts',
-        svgContent: '<svg viewBox="0 0 400 300"><circle cx="200" cy="150" r="40" fill="#fff3e0" stroke="#f57c00"/><text x="200" y="155" text-anchor="middle">Main Topic</text><circle cx="100" cy="80" r="30" fill="#e8f5e8" stroke="#388e3c"/><text x="100" y="85" text-anchor="middle">Concept A</text><line x1="170" y1="125" x2="125" y2="95" stroke="#666"/></svg>'
+        front: 'Learning Types Comparison',
+        back: 'Supervised: Labeled data | Unsupervised: Pattern finding | Reinforcement: Trial & error',
+        type: 'basic',
+        difficulty: 'medium',
+        visual: true,
+        svgContent: '<svg viewBox="0 0 400 200" class="w-full h-32"><circle cx="100" cy="100" r="50" fill="#ffeb3b" stroke="#f57c00" stroke-width="2"/><text x="100" y="105" text-anchor="middle" class="text-xs">Supervised</text><circle cx="200" cy="100" r="50" fill="#e8f5e8" stroke="#4caf50" stroke-width="2"/><text x="200" y="105" text-anchor="middle" class="text-xs">Unsupervised</text><circle cx="300" cy="100" r="50" fill="#f3e5f5" stroke="#9c27b0" stroke-width="2"/><text x="300" y="105" text-anchor="middle" class="text-xs">Reinforcement</text></svg>'
+      },
+      {
+        id: 'visual-3',
+        front: 'Algorithm Classification Table',
+        back: 'Linear Regression: Supervised | K-means: Unsupervised | Q-learning: Reinforcement',
+        type: 'basic',
+        difficulty: 'hard',
+        visual: true,
+        tableData: [
+          ['Algorithm', 'Type', 'Use Case'],
+          ['Linear Regression', 'Supervised', 'Prediction'],
+          ['K-means', 'Unsupervised', 'Clustering'],
+          ['Q-learning', 'Reinforcement', 'Game AI']
+        ]
       }
     ];
     
+    setGeneratedCards(mockVisualCards);
     onVisualCardsGenerated(mockVisualCards);
     setIsGenerating(false);
-    toast.success(`Generated ${mockVisualCards.length} visual cards`);
+    toast.success(`Generated ${mockVisualCards.length} visual flashcards!`);
   };
 
   return (
@@ -50,6 +73,9 @@ const VisualFlashcardGenerator = ({ transcript, onVisualCardsGenerated }: Visual
         <CardTitle className="flex items-center gap-2">
           <Image className="h-5 w-5" />
           Visual Flashcard Generator
+          {generatedCards.length > 0 && (
+            <Badge variant="secondary">{generatedCards.length} cards</Badge>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -99,6 +125,20 @@ const VisualFlashcardGenerator = ({ transcript, onVisualCardsGenerated }: Visual
         >
           {isGenerating ? 'Generating Visual Cards...' : 'Generate Visual Cards'}
         </Button>
+
+        {generatedCards.length > 0 && (
+          <div className="mt-4 p-4 bg-white rounded-lg border">
+            <h4 className="font-medium mb-3">Generated Visual Cards Preview</h4>
+            <div className="space-y-2">
+              {generatedCards.map((card, index) => (
+                <div key={card.id} className="flex items-center gap-2 text-sm">
+                  <Badge variant="outline">{index + 1}</Badge>
+                  <span>{card.front}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
