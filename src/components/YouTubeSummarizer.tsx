@@ -13,9 +13,10 @@ import { supabase } from '@/integrations/supabase/client';
 interface YouTubeSummarizerProps {
   onFlashcardsGenerated: (flashcards: Flashcard[]) => void;
   onYouTubeProcessed: (title: string, url: string, transcript: string, summary: string) => Promise<void>;
+  sessionId: string | null;
 }
 
-const YouTubeSummarizer = ({ onFlashcardsGenerated, onYouTubeProcessed }: YouTubeSummarizerProps) => {
+const YouTubeSummarizer = ({ onFlashcardsGenerated, onYouTubeProcessed, sessionId }: YouTubeSummarizerProps) => {
   const [videoUrl, setVideoUrl] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [summary, setSummary] = useState('');
@@ -315,7 +316,7 @@ ${keyPoints.map((point, index) => `${index + 1}. ${point}`).join('\n')}
         {summary && (
           <Button 
             onClick={generateFlashcardsFromVideo}
-            disabled={isProcessing || !config}
+            disabled={isProcessing || !config || !sessionId}
             className="w-full gap-2 bg-red-600 hover:bg-red-700"
             size="lg"
           >

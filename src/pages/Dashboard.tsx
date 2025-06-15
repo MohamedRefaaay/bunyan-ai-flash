@@ -228,7 +228,7 @@ const Dashboard = () => {
       case 'document-analyzer':
         return <DocumentAnalyzer onFlashcardsGenerated={handleFlashcardsGenerated} onDocumentProcessed={handleDocumentProcessed} sessionId={sessionId} />;
       case 'youtube':
-        return <YouTubeSummarizer onFlashcardsGenerated={handleFlashcardsGenerated} onYouTubeProcessed={handleYouTubeProcessed} />;
+        return <YouTubeSummarizer onFlashcardsGenerated={handleFlashcardsGenerated} onYouTubeProcessed={handleYouTubeProcessed} sessionId={sessionId} />;
       case 'upload':
         return <AudioUploader onFileUpload={handleFileUpload} onTranscriptGenerated={handleTranscriptGenerated} />;
       case 'summary':
