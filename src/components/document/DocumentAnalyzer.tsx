@@ -5,8 +5,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Upload, Brain } from "lucide-react";
 import DocumentUploader from "./DocumentUploader";
 import DocumentSummarizer from "./DocumentSummarizer";
+import type { Flashcard } from "@/types/flashcard";
 
-const DocumentAnalyzer = () => {
+interface DocumentAnalyzerProps {
+  onFlashcardsGenerated: (flashcards: Flashcard[]) => void;
+}
+
+const DocumentAnalyzer = ({ onFlashcardsGenerated }: DocumentAnalyzerProps) => {
   const [documentContent, setDocumentContent] = useState("");
   const [fileName, setFileName] = useState("");
 
@@ -44,6 +49,7 @@ const DocumentAnalyzer = () => {
             <DocumentSummarizer 
               documentContent={documentContent} 
               fileName={fileName}
+              onFlashcardsGenerated={onFlashcardsGenerated}
             />
           </TabsContent>
         </Tabs>

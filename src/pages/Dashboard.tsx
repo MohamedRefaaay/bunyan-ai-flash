@@ -70,7 +70,7 @@ const Dashboard = () => {
   const renderFeatureComponent = () => {
     switch (activeFeature) {
       case 'document-analyzer':
-        return <DocumentAnalyzer />;
+        return <DocumentAnalyzer onFlashcardsGenerated={handleFlashcardsGenerated} />;
       case 'youtube':
         return <YouTubeSummarizer onFlashcardsGenerated={handleFlashcardsGenerated} />;
       case 'upload':

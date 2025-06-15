@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -65,14 +66,12 @@ const YouTubeSummarizer = ({ onFlashcardsGenerated }: YouTubeSummarizerProps) =>
     setSessionId(null);
 
     try {
-      // محاكاة استخراج معلومات الفيديو (في التطبيق الحقيقي ستحتاج YouTube API)
       const mockVideoInfo = {
         title: 'فيديو تعليمي عن ' + videoId.substring(0, 8),
         duration: '15:30'
       };
       setVideoInfo(mockVideoInfo);
 
-      // محاكاة محتوى الفيديو (في التطبيق الحقيقي ستحتاج لاستخراج الترجمة)
       const mockTranscript = `
       مرحباً بكم في هذا الفيديو التعليمي. سنتحدث اليوم عن موضوع مهم جداً في مجال التعليم والتكنولوجيا.
       
@@ -96,7 +95,6 @@ const YouTubeSummarizer = ({ onFlashcardsGenerated }: YouTubeSummarizerProps) =>
       في الختام، التعلم رحلة مستمرة لا تنتهي. كل يوم فرصة جديدة لتعلم شيء مفيد وتطوير أنفسنا.
       `;
 
-      // إنشاء التلخيص
       const summaryPrompt = `قم بتحليل وتلخيص محتوى هذا الفيديو التعليمي من يوتيوب:
 
 العنوان: ${mockVideoInfo.title}
@@ -126,7 +124,26 @@ ${mockTranscript}
       setSummary(analysis.summary);
       setKeyPoints(analysis.keyPoints || []);
       
-      toast.success('تم تحليل الفيديو بنجاح!');
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('sessions')
+        .insert({
+          title: mockVideoInfo.title,
+          source_type: 'youtube',
+          source_url: videoUrl,
+          summary: analysis.summary,
+          transcript: mockTranscript,
+        })
+        .select('id')
+        .single();
+      
+      if (sessionError) {
+        console.error('Error creating session:', sessionError);
+        throw new Error('فشل إنشاء جلسة التحليل.');
+      }
+      
+      setSessionId(sessionData.id);
+      
+      toast.success('تم تحليل الفيديو وإنشاء جلسة بنجاح!');
     } catch (error) {
       console.error('Error analyzing video:', error);
       toast.error(error instanceof Error ? error.message : 'حدث خطأ في تحليل الفيديو');
@@ -177,7 +194,7 @@ ${keyPoints.map((point, index) => `${index + 1}. ${point}`).join('\n')}
       });
 
       const cleanJson = flashcardsResult.replace(/```json|```/g, '').trim();
-      const flashcards: Flashcard[] = JSON.parse(cleanJson);
+      const flashcards: any[] = JSON.parse(cleanJson);
       
       if (Array.isArray(flashcards)) {
         const flashcardsToInsert = flashcards.map(card => ({
@@ -198,7 +215,7 @@ ${keyPoints.map((point, index) => `${index + 1}. ${point}`).join('\n')}
           throw new Error('فشل حفظ البطاقات في قاعدة البيانات.');
         }
         
-        onFlashcardsGenerated(flashcards);
+        onFlashcardsGenerated(flashcards as Flashcard[]);
         toast.success(`تم إنشاء وحفظ ${flashcards.length} بطاقة تعليمية من الفيديو!`);
       } else {
         throw new Error('تنسيق غير صحيح للبطاقات');

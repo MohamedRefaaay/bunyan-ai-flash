@@ -33,10 +33,15 @@ import ConceptsTab from "./tabs/ConceptsTab";
 import GlossaryTab from "./tabs/GlossaryTab";
 import QuestionsTab from "./tabs/QuestionsTab";
 import AdvancedTab from "./tabs/AdvancedTab";
+import { supabase } from "@/integrations/supabase/client";
+import type { Flashcard } from "@/types/flashcard";
 
-const DocumentSummarizer = ({ documentContent, fileName }: DocumentSummarizerProps) => {
+
+const DocumentSummarizer = ({ documentContent, fileName, onFlashcardsGenerated }: DocumentSummarizerProps & { onFlashcardsGenerated: (flashcards: Flashcard[]) => void }) => {
   const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [isGeneratingCards, setIsGeneratingCards] = useState(false);
 
   const generateComprehensiveSummary = async () => {
     if (!documentContent) {
@@ -57,6 +62,7 @@ const DocumentSummarizer = ({ documentContent, fileName }: DocumentSummarizerPro
 
     setIsAnalyzing(true);
     setSummaryData(null);
+    setSessionId(null);
 
     const comprehensivePrompt = generateComprehensivePrompt(documentContent);
 
@@ -70,9 +76,31 @@ const DocumentSummarizer = ({ documentContent, fileName }: DocumentSummarizerPro
         const analysisData = JSON.parse(cleanJson);
         
         setSummaryData(analysisData);
-        toast.success("تم إنشاء التحليل الشامل المتقدم بنجاح!");
-      } catch {
-        toast.error("خطأ في تحليل استجابة الذكاء الاصطناعي");
+        
+        const { data: sessionData, error: sessionError } = await supabase
+          .from('sessions')
+          .insert({
+            title: fileName,
+            source_type: 'document',
+            summary: analysisData.summary.narrative_summary,
+            transcript: documentContent,
+          })
+          .select('id')
+          .single();
+
+        if (sessionError) {
+          console.error("Error creating session:", sessionError);
+          throw new Error('فشل إنشاء جلسة التحليل.');
+        }
+
+        if (sessionData) {
+          setSessionId(sessionData.id);
+        }
+
+        toast.success("تم إنشاء التحليل الشامل وحفظ الجلسة بنجاح!");
+      } catch (e){
+        console.error("Error parsing AI response or saving session", e);
+        toast.error("خطأ في تحليل استجابة الذكاء الاصطناعي أو حفظ الجلسة");
       }
     } catch (error) {
       console.error("Error generating analysis:", error);
@@ -81,6 +109,80 @@ const DocumentSummarizer = ({ documentContent, fileName }: DocumentSummarizerPro
       setIsAnalyzing(false);
     }
   };
+
+  const generateFlashcardsFromDocument = async () => {
+    if (!summaryData || !sessionId) {
+      toast.error('يرجى تحليل المستند أولاً لإنشاء البطاقات');
+      return;
+    }
+
+    const config = getAIProviderConfig();
+    if (!config) {
+      toast.error("الرجاء إدخال مفتاح API في الإعدادات أولاً.");
+      return;
+    }
+
+    setIsGeneratingCards(true);
+
+    try {
+      const flashcardPrompt = `بناءً على تحليل هذا المستند، قم بإنشاء 12 بطاقة تعليمية:
+
+${generateDownloadContent(summaryData, fileName)}
+
+يجب أن تكون الإجابة بصيغة JSON فقط مع هذا التنسيق:
+[
+  {
+    "id": "1",
+    "front": "السؤال هنا", 
+    "back": "الإجابة هنا",
+    "difficulty": "medium",
+    "category": "مستند",
+    "tags": ["ملخص", "${fileName}"],
+    "source": "Document"
+  }
+]
+
+تأكد من تنويع أنواع الأسئلة وتغطية المحتوى بشكل شامل.`;
+
+      const flashcardsResult = await makeAIRequest(flashcardPrompt, {
+        systemPrompt: 'أنت خبير في إنشاء البطاقات التعليمية من المستندات. أجب بصيغة JSON صحيحة فقط.'
+      });
+
+      const cleanJson = flashcardsResult.replace(/```json|```/g, '').trim();
+      const flashcards: any[] = JSON.parse(cleanJson);
+      
+      if (Array.isArray(flashcards)) {
+        const flashcardsToInsert = flashcards.map(card => ({
+          front: card.front,
+          back: card.back,
+          difficulty: card.difficulty,
+          tags: card.tags,
+          session_id: sessionId,
+          type: 'basic',
+        }));
+
+        const { error: insertError } = await supabase
+          .from('flashcards')
+          .insert(flashcardsToInsert);
+
+        if (insertError) {
+          console.error("Error saving flashcards:", insertError);
+          throw new Error('فشل حفظ البطاقات في قاعدة البيانات.');
+        }
+        
+        onFlashcardsGenerated(flashcards as Flashcard[]);
+        toast.success(`تم إنشاء وحفظ ${flashcards.length} بطاقة تعليمية من المستند!`);
+      } else {
+        throw new Error('تنسيق غير صحيح للبطاقات');
+      }
+    } catch (error) {
+      console.error('Error generating flashcards from document:', error);
+      toast.error('حدث خطأ في إنشاء البطاقات');
+    } finally {
+      setIsGeneratingCards(false);
+    }
+  };
+
 
   const handleDownloadSummary = () => {
     if (!summaryData) {
@@ -166,7 +268,29 @@ const DocumentSummarizer = ({ documentContent, fileName }: DocumentSummarizerPro
           </div>
         )}
 
-        {/* باقي المحتوى كما هو */}
+        {summaryData && !isAnalyzing && (
+            <div className="flex justify-center mt-4">
+              <Button 
+                onClick={generateFlashcardsFromDocument}
+                disabled={isGeneratingCards || !sessionId}
+                className="gap-2 bg-green-600 hover:bg-green-700"
+                size="lg"
+              >
+                {isGeneratingCards ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    جاري إنشاء البطاقات...
+                  </>
+                ) : (
+                  <>
+                    <BookOpen className="h-5 w-5" />
+                    إنشاء بطاقات تعليمية من المستند
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+
         {(summaryData || isAnalyzing) && (
           <Tabs defaultValue="summary" className="w-full">
             <TabsList className="grid grid-cols-4 md:grid-cols-8 w-full text-xs">
