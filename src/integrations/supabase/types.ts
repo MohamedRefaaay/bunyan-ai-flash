@@ -300,13 +300,6 @@ export type Database = {
             referencedRelation: "sessions"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "flashcards_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
         ]
       }
       sessions: {
@@ -367,15 +360,7 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "sessions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       shared_decks: {
         Row: {

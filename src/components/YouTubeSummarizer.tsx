@@ -106,8 +106,15 @@ ${transcript}
         systemPrompt: 'أنت خبير في تحليل وتلخيص المحتوى التعليمي. أجب بصيغة JSON صحيحة فقط.'
       });
 
-      const cleanJson = analysisResult.replace(/```json|```/g, '').trim();
-      const analysis = JSON.parse(cleanJson);
+      let analysis;
+      try {
+        const cleanJson = analysisResult.replace(/```json|```/g, '').trim();
+        analysis = JSON.parse(cleanJson);
+      } catch(e) {
+        console.error("Failed to parse JSON from summary AI:", analysisResult);
+        toast.error("فشل تحليل استجابة الذكاء الاصطناعي. قد تكون الاستجابة غير متوقعة.");
+        throw new Error("Invalid JSON response for summary.");
+      }
       
       setSummary(analysis.summary);
       setKeyPoints(analysis.keyPoints || []);
@@ -168,8 +175,15 @@ ${keyPoints.map((point, index) => `${index + 1}. ${point}`).join('\n')}
         systemPrompt: 'أنت خبير في إنشاء البطاقات التعليمية من المحتوى المرئي. أجب بصيغة JSON صحيحة فقط.'
       });
 
-      const cleanJson = flashcardsResult.replace(/```json|```/g, '').trim();
-      const flashcards: any[] = JSON.parse(cleanJson);
+      let flashcards: any[];
+      try {
+        const cleanJson = flashcardsResult.replace(/```json|```/g, '').trim();
+        flashcards = JSON.parse(cleanJson);
+      } catch (e) {
+        console.error("Failed to parse JSON from flashcards AI:", flashcardsResult);
+        toast.error("فشل تحليل استجابة الذكاء الاصطناعي للبطاقات.");
+        throw new Error("Invalid JSON response for flashcards.");
+      }
       
       if (Array.isArray(flashcards)) {
         onFlashcardsGenerated(flashcards as Flashcard[]);
@@ -178,7 +192,7 @@ ${keyPoints.map((point, index) => `${index + 1}. ${point}`).join('\n')}
       }
     } catch (error) {
       console.error('Error generating flashcards:', error);
-      toast.error('حدث خطأ في إنشاء البطاقات');
+      toast.error(error instanceof Error ? error.message : 'حدث خطأ في إنشاء البطاقات');
     } finally {
       setIsProcessing(false);
     }

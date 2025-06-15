@@ -95,21 +95,16 @@ const makeOpenAIRequest = async (apiKey: string, model: string, prompt: string, 
 };
 
 const makeGeminiRequest = async (apiKey: string, model: string, prompt: string, systemPrompt: string) => {
-  const fullPrompt = `${systemPrompt}\n\nالمستخدم: ${prompt}`;
-  
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+  const requestBody: any = {
       contents: [{ 
         role: "user", 
-        parts: [{ text: fullPrompt }] 
+        parts: [{ text: prompt }] 
       }],
       generationConfig: {
         temperature: 0.7,
         maxOutputTokens: 8000,
         topK: 40,
-        topP: 0.95
+        topP: 0.95,
       },
       safetySettings: [
         {
@@ -129,7 +124,21 @@ const makeGeminiRequest = async (apiKey: string, model: string, prompt: string, 
           threshold: "BLOCK_MEDIUM_AND_ABOVE"
         }
       ]
-    })
+    };
+
+    if (systemPrompt) {
+        requestBody.systemInstruction = {
+          parts: [{ text: systemPrompt }]
+        };
+        if (prompt.toLowerCase().includes('json')) {
+            requestBody.generationConfig.responseMimeType = "application/json";
+        }
+    }
+  
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(requestBody)
   });
 
   if (!response.ok) {
@@ -140,6 +149,11 @@ const makeGeminiRequest = async (apiKey: string, model: string, prompt: string, 
   const data = await response.json();
   
   if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+    if (data.promptFeedback?.blockReason) {
+        const reason = `تم حظر الطلب بواسطة Gemini بسبب: ${data.promptFeedback.blockReason}.`;
+        const details = data.promptFeedback.safetyRatings?.map((r:any) => `${r.category}: ${r.probability}`).join(', ');
+        throw new Error(`${reason} تفاصيل: ${details || 'لا توجد تفاصيل'}`);
+    }
     throw new Error('استجابة غير صالحة من Gemini API');
   }
   

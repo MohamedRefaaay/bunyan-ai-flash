@@ -40,17 +40,18 @@ const AudioUploader = ({ onFileUpload, onTranscriptGenerated }: AudioUploaderPro
   const processAudioFile = async (file: File) => {
     setIsProcessing(true);
     try {
-      // التأكد من أن Gemini هو المزود المختار والمهيأ
-      const geminiApiKey = localStorage.getItem('gemini_api_key');
+      const config = getAIProviderConfig();
 
-      if (!geminiApiKey) {
-        toast.error("يرجى إعداد مفتاح Gemini API في الإعدادات أولاً.", {
+      if (!config || config.provider !== 'gemini' || !localStorage.getItem('gemini_api_key')) {
+        toast.error("لتحويل الصوت، يرجى اختيار وتكوين Gemini في الإعدادات.", {
+          description: "هذه الميزة تستخدم Gemini للحصول على أفضل دقة.",
           action: {
-            label: "إعدادات",
+            label: "إلى الإعدادات",
             onClick: () => window.location.href = "/settings"
           }
         });
-        throw new Error("مفتاح Gemini API غير مهيأ.");
+        setIsProcessing(false);
+        return;
       }
       
       const audioBase64 = await fileToBase64(file);
