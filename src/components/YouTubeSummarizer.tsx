@@ -110,8 +110,7 @@ ${transcript}
 }`;
 
       const analysisResult = await makeAIRequest(summaryPrompt, {
-        systemPrompt: 'أنت خبير في تحليل وتلخيص المحتوى التعليمي. أجب بصيغة JSON صحيحة فقط.',
-        provider: 'gemini'
+        systemPrompt: 'أنت خبير في تحليل وتلخيص المحتوى التعليمي. أجب بصيغة JSON صحيحة فقط.'
       });
 
       let analysis;
@@ -184,8 +183,7 @@ ${keyPoints.map((point, index) => `${index + 1}. ${point}`).join('\n')}
     };
 
       const flashcardsResult = await makeAIRequest(prompts[flashcardFormat], {
-        systemPrompt: 'أنت خبير في إنشاء البطاقات التعليمية من المحتوى المرئي. أجب بصيغة JSON صحيحة فقط.',
-        provider: 'gemini'
+        systemPrompt: 'أنت خبير في إنشاء البطاقات التعليمية من المحتوى المرئي. أجب بصيغة JSON صحيحة فقط.'
       });
 
       let flashcards: any[];
