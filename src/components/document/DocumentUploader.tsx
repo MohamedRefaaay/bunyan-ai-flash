@@ -25,35 +25,40 @@ const DocumentUploader = ({ onDocumentProcessed }: DocumentUploaderProps) => {
     return validTypes.includes(file.type);
   };
 
+  const extractTextFromPDF = async (file: File): Promise<string> => {
+    try {
+      // استخدام FileReader لقراءة ملف PDF
+      const arrayBuffer = await file.arrayBuffer();
+      
+      // استخدام مكتبة pdf-parse المتاحة
+      const pdfParse = await import('pdf-parse');
+      const data = await pdfParse.default(arrayBuffer);
+      
+      return data.text;
+    } catch (error) {
+      console.error('Error extracting PDF text:', error);
+      // في حالة فشل استخراج النص، نقترح على المستخدم نسخ النص يدوياً
+      throw new Error('فشل في استخراج النص من ملف PDF. يرجى نسخ النص يدوياً أو استخدام ملف نصي عادي.');
+    }
+  };
+
   const extractTextFromFile = async (file: File): Promise<string> => {
     if (file.type === 'application/pdf') {
-      // For PDF files, we'll use the supabase edge function
-      const formData = new FormData();
-      formData.append('file', file);
-      
-      const response = await fetch('/api/extract-pdf-text', {
-        method: 'POST',
-        body: formData,
-      });
-      
-      if (!response.ok) {
-        throw new Error('فشل في استخراج النص من ملف PDF');
-      }
-      
-      const result = await response.json();
-      return result.text;
+      return await extractTextFromPDF(file);
     } else if (file.type === 'text/plain') {
-      // For text files, read directly
+      // للملفات النصية، قراءة مباشرة
       return await file.text();
+    } else if (file.type.includes('word') || file.type.includes('document')) {
+      // للملفات Word، نطلب من المستخدم تحويلها إلى PDF أو نص
+      throw new Error('ملفات Word غير مدعومة حالياً. يرجى تحويل الملف إلى PDF أو نص عادي.');
     } else {
-      // For Word files, we'll need to handle them differently
-      throw new Error('نوع الملف غير مدعوم حالياً. يرجى استخدام ملفات PDF أو نصوص عادية.');
+      throw new Error('نوع الملف غير مدعوم. يرجى استخدام ملفات PDF أو نصوص عادية.');
     }
   };
 
   const handleFileSelect = async (file: File) => {
     if (!validateDocumentFile(file)) {
-      toast.error("يرجى رفع ملف PDF أو Word أو نص عادي");
+      toast.error("يرجى رفع ملف PDF أو نص عادي");
       return;
     }
 
@@ -62,11 +67,17 @@ const DocumentUploader = ({ onDocumentProcessed }: DocumentUploaderProps) => {
 
     try {
       const extractedText = await extractTextFromFile(file);
+      
+      if (!extractedText || extractedText.trim().length === 0) {
+        throw new Error('الملف فارغ أو لا يحتوي على نص قابل للقراءة');
+      }
+      
       onDocumentProcessed(extractedText, file.name);
       toast.success("تم استخراج النص من الملف بنجاح!");
     } catch (error) {
       console.error("خطأ في معالجة الملف:", error);
-      toast.error("حدث خطأ في معالجة الملف. يرجى المحاولة مرة أخرى.");
+      const errorMessage = error instanceof Error ? error.message : "حدث خطأ في معالجة الملف";
+      toast.error(errorMessage);
     } finally {
       setIsProcessing(false);
     }
@@ -103,7 +114,7 @@ const DocumentUploader = ({ onDocumentProcessed }: DocumentUploaderProps) => {
         <Alert className="mb-4 border-green-200 bg-green-50">
           <CheckCircle className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-green-800">
-            يدعم التطبيق تلخيص ملفات PDF و Word باستخدام Gemini AI مع استراتيجية الأهداف والغرض
+            يدعم التطبيق تلخيص ملفات PDF والنصوص العادية باستخدام Gemini AI مع استراتيجية الأهداف والغرض
           </AlertDescription>
         </Alert>
 
@@ -133,7 +144,7 @@ const DocumentUploader = ({ onDocumentProcessed }: DocumentUploaderProps) => {
                 اسحب وأفلت ملفك هنا أو اضغط للاختيار
               </p>
               <p className="text-sm text-purple-600">
-                يدعم ملفات PDF و Word و النصوص العادية
+                يدعم ملفات PDF والنصوص العادية
               </p>
             </div>
           )}
@@ -142,7 +153,7 @@ const DocumentUploader = ({ onDocumentProcessed }: DocumentUploaderProps) => {
         <input
           id="document-upload"
           type="file"
-          accept=".pdf,.doc,.docx,.txt"
+          accept=".pdf,.txt"
           onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
           className="hidden"
           disabled={isProcessing}
@@ -166,6 +177,7 @@ const DocumentUploader = ({ onDocumentProcessed }: DocumentUploaderProps) => {
           <p>• يستخدم التطبيق Gemini AI لتحليل وتلخيص المستندات</p>
           <p>• يدعم اللغة العربية والإنجليزية</p>
           <p>• يقوم بإنشاء ملخصات احترافية مع خرائط ذهنية</p>
+          <p>• لأفضل النتائج، استخدم ملفات PDF أو نصوص واضحة</p>
         </div>
       </CardContent>
     </Card>
