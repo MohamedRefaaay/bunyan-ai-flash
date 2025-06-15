@@ -34,6 +34,18 @@ const Header = () => {
           </Link>
 
           <div className="flex items-center gap-4">
+            {/* Navigation Links */}
+            {user && (
+              <div className="hidden md:flex items-center gap-4">
+                <Button asChild variant="ghost" size="sm">
+                  <Link to="/">الرئيسية</Link>
+                </Button>
+                <Button asChild variant="ghost" size="sm">
+                  <Link to="/dashboard">لوحة التحكم</Link>
+                </Button>
+              </div>
+            )}
+
              {/* Language Toggle */}
             <Button
               variant="outline"
