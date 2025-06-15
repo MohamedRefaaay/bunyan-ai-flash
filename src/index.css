@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;700&display=swap');
 
 @tailwind base;
@@ -101,5 +102,15 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
   }
 }
