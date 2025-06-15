@@ -1,8 +1,8 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Sparkles, Bot, Settings, AlertCircle } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, Sparkles, Bot, Settings, AlertCircle, Type } from 'lucide-react';
 import { toast } from 'sonner';
 import { makeAIRequest, getAIProviderConfig } from '@/utils/aiProviders';
 import type { Flashcard } from '@/types/flashcard';
@@ -20,7 +20,7 @@ const FlashcardGenerator = ({
   isProcessing, 
   setIsProcessing 
 }: FlashcardGeneratorProps) => {
-  const [generationType, setGenerationType] = useState<'basic' | 'advanced' | 'comprehensive'>('advanced');
+  const [flashcardFormat, setFlashcardFormat] = useState<'qa' | 'cloze' | 'mcq' | 'true_false'>('qa');
   
   const generateFlashcards = async () => {
     if (!transcript) {
@@ -41,78 +41,52 @@ const FlashcardGenerator = ({
 
     setIsProcessing(true);
 
-    const prompts = {
-      basic: `قم بتحليل هذا النص وإنشاء 10 بطاقات تعليمية أساسية:
-
+    const basePromptInfo = `
 النص: ${transcript}
 
-يجب أن تكون الإجابة بصيغة JSON فقط مع هذا التنسيق:
+يجب أن تكون الإجابة بصيغة JSON فقط مع هذا التنسيق (لا تقم بإضافة التوقيع، سأضيفه بنفسي):
 [
   {
     "id": "1",
-    "front": "السؤال هنا",
-    "back": "الإجابة هنا",
-    "difficulty": "easy",
+    "front": "...", 
+    "back": "...",
+    "difficulty": "medium",
     "category": "عام",
-    "tags": ["tag1", "tag2"]
-  }
-]`,
-
-      advanced: `قم بتحليل هذا النص وإنشاء 15 بطاقة تعليمية متقدمة مع مستويات صعوبة مختلفة:
-
-النص: ${transcript}
-
-يجب أن تكون الإجابة بصيغة JSON فقط مع هذا التنسيق:
-[
-  {
-    "id": "1", 
-    "front": "السؤال هنا",
-    "back": "الإجابة التفصيلية هنا",
-    "difficulty": "medium",
-    "category": "تصنيف المحتوى",
-    "tags": ["tag1", "tag2", "tag3"],
-    "explanation": "شرح إضافي للإجابة"
+    "tags": ["bunyan_ai"]
   }
 ]
+`;
 
-تأكد من تنويع مستويات الصعوبة: easy, medium, hard`,
+    const prompts = {
+      qa: `قم بإنشاء 10 بطاقات تعليمية بصيغة سؤال وجواب من النص التالي.
+${basePromptInfo}`,
 
-      comprehensive: `قم بتحليل هذا النص وإنشاء 25 بطاقة تعليمية شاملة ومتنوعة:
+      cloze: `قم بإنشاء 10 بطاقات تعليمية بصيغة ملء الفراغات (Cloze) من النص التالي. استخدم صيغة Anki القياسية {{c1::الكلمة}} في حقل "front".
+${basePromptInfo}`,
 
-النص: ${transcript}
-
-يجب أن تكون الإجابة بصيغة JSON فقط مع هذا التنسيق:
-[
-  {
-    "id": "1",
-    "front": "السؤال هنا", 
-    "back": "الإجابة الشاملة هنا",
-    "difficulty": "medium",
-    "category": "تصنيف دقيق",
-    "tags": ["tag1", "tag2", "tag3"],
-    "explanation": "شرح مفصل",
-    "examples": ["مثال 1", "مثال 2"],
-    "relatedConcepts": ["مفهوم متصل 1", "مفهوم متصل 2"]
-  }
-]
-
-تأكد من:
-- تنويع أنواع الأسئلة (تعريف، تطبيق، تحليل، تقييم)
-- تغطية جميع النقاط المهمة في النص
-- إضافة أمثلة عملية حيثما أمكن`
+      mcq: `قم بإنشاء 10 بطاقات تعليمية بصيغة اختيار من متعدد من النص التالي. يجب أن يحتوي حقل "front" على السؤال، وحقل "back" على الخيارات مع توضيح الإجابة الصحيحة.
+${basePromptInfo}`,
+      
+      true_false: `قم بإنشاء 10 بطاقات تعليمية بصيغة صح/خطأ من النص التالي. يجب أن يحتوي حقل "front" على العبارة، وحقل "back" على "صح" أو "خطأ" مع شرح موجز.
+${basePromptInfo}`
     };
 
     try {
-      const response = await makeAIRequest(prompts[generationType], {
+      const response = await makeAIRequest(prompts[flashcardFormat], {
         systemPrompt: 'أنت خبير في إنشاء البطاقات التعليمية. أجب بصيغة JSON صحيحة فقط بدون أي نص إضافي.'
       });
 
       const cleanJson = response.replace(/```json|```/g, '').trim();
-      const flashcards = JSON.parse(cleanJson);
+      const parsedFlashcards = JSON.parse(cleanJson);
       
-      if (Array.isArray(flashcards)) {
-        onFlashcardsGenerated(flashcards);
-        toast.success(`تم إنشاء ${flashcards.length} بطاقة تعليمية بنجاح!`);
+      if (Array.isArray(parsedFlashcards)) {
+        const flashcardsWithSignature = parsedFlashcards.map(card => ({
+            ...card,
+            back: card.back ? `${card.back}\n\n📘 Made with Bunyan_Anki_AI` : '📘 Made with Bunyan_Anki_AI'
+        }));
+
+        onFlashcardsGenerated(flashcardsWithSignature);
+        toast.success(`تم إنشاء ${flashcardsWithSignature.length} بطاقة تعليمية بنجاح!`);
       } else {
         throw new Error('تنسيق غير صحيح للبطاقات');
       }
@@ -160,29 +134,21 @@ const FlashcardGenerator = ({
 
         {/* نوع الإنشاء */}
         <div className="space-y-3">
-          <h3 className="font-medium text-gray-900">اختر نوع الإنشاء:</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {[
-              { value: 'basic', label: 'أساسي', desc: '10 بطاقات سريعة', color: 'bg-blue-50 border-blue-200' },
-              { value: 'advanced', label: 'متقدم', desc: '15 بطاقة متنوعة', color: 'bg-green-50 border-green-200' },
-              { value: 'comprehensive', label: 'شامل', desc: '25 بطاقة مفصلة', color: 'bg-purple-50 border-purple-200' }
-            ].map((type) => (
-              <Card 
-                key={type.value}
-                className={`cursor-pointer transition-all ${
-                  generationType === type.value 
-                    ? `${type.color} border-2` 
-                    : 'bg-white border hover:shadow-md'
-                }`}
-                onClick={() => setGenerationType(type.value as any)}
-              >
-                <CardContent className="p-4 text-center">
-                  <h4 className="font-medium">{type.label}</h4>
-                  <p className="text-sm text-gray-600">{type.desc}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <h3 className="font-medium text-gray-900 flex items-center gap-2">
+            <Type className="h-5 w-5 text-gray-700" />
+            اختر شكل البطاقة:
+          </h3>
+          <Select onValueChange={(value) => setFlashcardFormat(value as any)} defaultValue="qa">
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="اختر نوع البطاقة" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="qa">سؤال و جواب</SelectItem>
+              <SelectItem value="cloze">ملء الفراغات (Cloze)</SelectItem>
+              <SelectItem value="mcq">اختيار من متعدد</SelectItem>
+              <SelectItem value="true_false">صح / خطأ</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* معلومات النص */}
