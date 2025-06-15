@@ -174,7 +174,7 @@ const Dashboard = () => {
       }
     } else {
       setFlashcards(newFlashcards);
-      toast.warn("تم إنشاء البطاقات ولكن لم يتم العثور على جلسة لحفظها.");
+      toast.warning("تم إنشاء البطاقات ولكن لم يتم العثور على جلسة لحفظها.");
     }
   };
 

@@ -83,7 +83,7 @@ const DocumentSummarizer = ({ documentContent, fileName, onFlashcardsGenerated, 
           }
           toast.success("تم إنشاء التحليل الشامل وتحديث الجلسة بنجاح!");
         } else {
-           toast.warn("تم إنشاء التحليل ولكن لم يتم العثور على جلسة لتحديثها.");
+           toast.warning("تم إنشاء التحليل ولكن لم يتم العثور على جلسة لتحديثها.");
         }
 
       } catch (e){
