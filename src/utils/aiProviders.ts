@@ -1,4 +1,3 @@
-
 export type AIProvider = 'openai' | 'gemini' | 'anthropic';
 
 export interface AIProviderConfig {
@@ -61,20 +60,6 @@ export const makeAIRequest = async (prompt: string, options?: {
     }
   } catch (error) {
     console.error(`Error with ${provider}:`, error);
-    
-    // إذا فشل المزود الحالي، جرب Gemini كبديل
-    if (provider !== 'gemini') {
-      const geminiKey = localStorage.getItem('gemini_api_key');
-      if (geminiKey) {
-        console.log('Trying Gemini as fallback...');
-        try {
-          return await makeGeminiRequest(geminiKey, 'gemini-2.0-flash-exp', prompt, systemPrompt);
-        } catch (geminiError) {
-          console.error('Gemini fallback also failed:', geminiError);
-        }
-      }
-    }
-    
     throw error;
   }
 };

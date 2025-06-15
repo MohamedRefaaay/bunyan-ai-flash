@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -41,41 +40,32 @@ const AudioUploader = ({ onFileUpload, onTranscriptGenerated }: AudioUploaderPro
   const processAudioFile = async (file: File) => {
     setIsProcessing(true);
     try {
-      const config = getAIProviderConfig();
-      const provider = config?.provider;
+      // التأكد من أن Gemini هو المزود المختار والمهيأ
+      const geminiApiKey = localStorage.getItem('gemini_api_key');
 
-      const audioBase64 = await fileToBase64(file);
-      let transcriptText = "";
-
-      if (provider === 'gemini') {
-        const audioData = audioBase64.split(',')[1];
-        const { data, error } = await supabase.functions.invoke('transcribe-with-gemini', {
-            body: { audio: audioData, mimeType: file.type },
+      if (!geminiApiKey) {
+        toast.error("يرجى إعداد مفتاح Gemini API في الإعدادات أولاً.", {
+          action: {
+            label: "إعدادات",
+            onClick: () => window.location.href = "/settings"
+          }
         });
-        if (error) throw new Error(error.message);
-        if (data.error) throw new Error(data.error);
-        if (!data.text) throw new Error("لم يتمكن Gemini من تحويل الصوت.");
-        transcriptText = data.text;
-        toast.success("تم تحويل الصوت إلى نص بنجاح باستخدام Gemini!");
-      } else {
-        const { data, error } = await supabase.functions.invoke('transcribe', {
-            body: { audio: audioBase64 },
-        });
-
-        if (error) {
-            throw new Error(error.message);
-        }
-        
-        if (data.error) {
-            throw new Error(data.error)
-        }
-        
-        if (!data.text) {
-            throw new Error("لم يتمكن الذكاء الاصطناعي من تحويل الصوت.");
-        }
-        transcriptText = data.text;
-        toast.success("تم تحويل الصوت إلى نص بنجاح باستخدام OpenAI Whisper!");
+        throw new Error("مفتاح Gemini API غير مهيأ.");
       }
+      
+      const audioBase64 = await fileToBase64(file);
+      const audioData = audioBase64.split(',')[1];
+      
+      const { data, error } = await supabase.functions.invoke('transcribe-with-gemini', {
+          body: { audio: audioData, mimeType: file.type },
+      });
+
+      if (error) throw new Error(error.message);
+      if (data.error) throw new Error(data.error);
+      if (!data.text) throw new Error("لم يتمكن Gemini من تحويل الصوت.");
+      
+      const transcriptText = data.text;
+      toast.success("تم تحويل الصوت إلى نص بنجاح باستخدام Gemini!");
 
       onTranscriptGenerated(transcriptText);
 
@@ -134,7 +124,7 @@ const AudioUploader = ({ onFileUpload, onTranscriptGenerated }: AudioUploaderPro
         <Alert className="mb-4 border-green-200 bg-green-50">
           <CheckCircle className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-green-800">
-            يدعم التطبيق الآن تحويل الصوت إلى نص باستخدام OpenAI Whisper للحصول على أفضل النتائج
+            يدعم التطبيق الآن تحويل الصوت إلى نص باستخدام Google Gemini للحصول على أفضل النتائج.
           </AlertDescription>
         </Alert>
 
@@ -142,7 +132,7 @@ const AudioUploader = ({ onFileUpload, onTranscriptGenerated }: AudioUploaderPro
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="audio" className="flex items-center gap-2">
               <FileAudio className="h-4 w-4" />
-              ملف صوتي (Whisper AI)
+              ملف صوتي (Gemini AI)
             </TabsTrigger>
             <TabsTrigger value="text" className="flex items-center gap-2">
               <Type className="h-4 w-4" />
@@ -184,7 +174,7 @@ const AudioUploader = ({ onFileUpload, onTranscriptGenerated }: AudioUploaderPro
         </Tabs>
 
         <div className="text-xs text-muted-foreground mt-4">
-          <p>• يستخدم التطبيق OpenAI Whisper لتحويل الصوت إلى نص بدقة عالية</p>
+          <p>• يستخدم التطبيق Google Gemini لتحويل الصوت إلى نص بدقة عالية</p>
           <p>• يدعم اللغة العربية والإنجليزية وعدة لغات أخرى</p>
           <p>• يدعم ملفات MP3, WAV, M4A, MP4, WEBM للملفات الصوتية</p>
         </div>
