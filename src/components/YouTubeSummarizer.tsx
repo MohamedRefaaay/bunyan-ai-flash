@@ -9,6 +9,11 @@ import { toast } from 'sonner';
 import { makeAIRequest, getAIProviderConfig } from '@/utils/aiProviders';
 import type { Flashcard } from '@/types/flashcard';
 import { supabase } from '@/integrations/supabase/client';
+import YouTubeVideoInput from './youtube/YouTubeVideoInput';
+import YouTubeVideoInfoCard from './youtube/YouTubeVideoInfo';
+import YouTubeSummaryTabs from './youtube/YouTubeSummaryTabs';
+import YouTubeFlashcardsButton from './youtube/YouTubeFlashcardsButton';
+import type { YouTubeVideoInfo, Flashcard } from './youtube/youtubeSummarizerTypes';
 
 interface YouTubeSummarizerProps {
   onFlashcardsGenerated: (flashcards: Flashcard[]) => void;
@@ -233,106 +238,27 @@ ${keyPoints.map((point, index) => `${index + 1}. ${point}`).join('\n')}
         )}
 
         {/* إدخال رابط الفيديو */}
-        <div className="space-y-3">
-          <label className="text-sm font-medium text-gray-700">
-            رابط فيديو يوتيوب:
-          </label>
-          <div className="flex gap-2">
-            <Input
-              type="url"
-              placeholder="https://www.youtube.com/watch?v=..."
-              value={videoUrl}
-              onChange={(e) => setVideoUrl(e.target.value)}
-              className="flex-1"
-              disabled={isProcessing}
-            />
-            <Button 
-              onClick={generateVideoSummary}
-              disabled={isProcessing || !videoUrl || !config}
-              className="gap-2"
-            >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  جاري التحليل...
-                </>
-              ) : (
-                <>
-                  <Play className="h-4 w-4" />
-                  تحليل الفيديو
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
+        <YouTubeVideoInput
+          videoUrl={videoUrl}
+          setVideoUrl={setVideoUrl}
+          onAnalyze={generateVideoSummary}
+          isProcessing={isProcessing}
+          configAvailable={!!config}
+        />
 
         {/* معلومات الفيديو */}
-        {videoInfo && (
-          <div className="bg-white rounded-lg border p-4">
-            <h3 className="font-medium text-gray-900 mb-2">معلومات الفيديو:</h3>
-            <div className="space-y-1 text-sm text-gray-600">
-              <p><strong>العنوان:</strong> {videoInfo.title}</p>
-            </div>
-          </div>
-        )}
+        {videoInfo && <YouTubeVideoInfoCard videoInfo={videoInfo} />}
 
         {/* النتائج */}
-        {(summary || keyPoints.length > 0) && (
-          <Tabs defaultValue="summary" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="summary" className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                الملخص
-              </TabsTrigger>
-              <TabsTrigger value="points" className="flex items-center gap-2">
-                <BookOpen className="h-4 w-4" />
-                النقاط الرئيسية
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="summary" className="mt-4">
-              <div className="bg-white rounded-lg border p-4">
-                <h3 className="font-medium text-gray-900 mb-3">ملخص الفيديو:</h3>
-                <p className="text-gray-700 leading-relaxed">{summary}</p>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="points" className="mt-4">
-              <div className="bg-white rounded-lg border p-4">
-                <h3 className="font-medium text-gray-900 mb-3">النقاط الرئيسية:</h3>
-                <ul className="space-y-2">
-                  {keyPoints.map((point, index) => (
-                    <li key={index} className="flex gap-3">
-                      <span className="text-red-600 font-medium">{index + 1}.</span>
-                      <span className="text-gray-700">{point}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </TabsContent>
-          </Tabs>
-        )}
+        <YouTubeSummaryTabs summary={summary} keyPoints={keyPoints} />
 
         {/* إنشاء البطاقات */}
         {summary && (
-          <Button 
-            onClick={generateFlashcardsFromVideo}
+          <YouTubeFlashcardsButton
+            onGenerate={generateFlashcardsFromVideo}
+            isProcessing={isProcessing}
             disabled={isProcessing || !config || !sessionId}
-            className="w-full gap-2 bg-red-600 hover:bg-red-700"
-            size="lg"
-          >
-            {isProcessing ? (
-              <>
-                <Loader2 className="h-5 w-5 animate-spin" />
-                جاري إنشاء البطاقات...
-              </>
-            ) : (
-              <>
-                <BookOpen className="h-5 w-5" />
-                إنشاء بطاقات تعليمية من الفيديو
-              </>
-            )}
-          </Button>
+          />
         )}
 
         {/* معلومات إضافية */}
