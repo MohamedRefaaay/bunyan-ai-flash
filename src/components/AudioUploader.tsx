@@ -12,6 +12,7 @@ import TextInput from "./audio/TextInput";
 import FilePreview from "./audio/FilePreview";
 import ProcessingStatus from "./audio/ProcessingStatus";
 import { fileToBase64, validateAudioFile } from "@/utils/audioUtils";
+import { getAIProviderConfig } from "@/utils/aiProviders";
 
 interface AudioUploaderProps {
   onFileUpload: (file: File) => void;
@@ -40,26 +41,47 @@ const AudioUploader = ({ onFileUpload, onTranscriptGenerated }: AudioUploaderPro
   const processAudioFile = async (file: File) => {
     setIsProcessing(true);
     try {
+      const config = getAIProviderConfig();
+      const provider = config?.provider;
+
       const audioBase64 = await fileToBase64(file);
+      let transcriptText = "";
 
-      const { data, error } = await supabase.functions.invoke('transcribe', {
-        body: { audio: audioBase64 },
-      });
+      if (provider === 'gemini') {
+        const audioData = audioBase64.split(',')[1];
+        const { data, error } = await supabase.functions.invoke('transcribe-with-gemini', {
+            body: { audio: audioData, mimeType: file.type },
+        });
+        if (error) throw new Error(error.message);
+        if (data.error) throw new Error(data.error);
+        if (!data.text) throw new Error("لم يتمكن Gemini من تحويل الصوت.");
+        transcriptText = data.text;
+        toast.success("تم تحويل الصوت إلى نص بنجاح باستخدام Gemini!");
+      } else {
+        const { data, error } = await supabase.functions.invoke('transcribe', {
+            body: { audio: audioBase64 },
+        });
 
-      if (error) {
-        throw new Error(error.message);
+        if (error) {
+            throw new Error(error.message);
+        }
+        
+        if (data.error) {
+            throw new Error(data.error)
+        }
+        
+        if (!data.text) {
+            throw new Error("لم يتمكن الذكاء الاصطناعي من تحويل الصوت.");
+        }
+        transcriptText = data.text;
+        toast.success("تم تحويل الصوت إلى نص بنجاح باستخدام OpenAI Whisper!");
       }
-      
-      if (!data.text) {
-        throw new Error("لم يتمكن الذكاء الاصطناعي من تحويل الصوت.");
-      }
 
-      onTranscriptGenerated(data.text);
-      toast.success("تم تحويل الصوت إلى نص بنجاح باستخدام OpenAI Whisper!");
+      onTranscriptGenerated(transcriptText);
 
     } catch (error) {
       console.error("خطأ في معالجة الملف:", error);
-      toast.error("حدث خطأ في تحويل الصوت. يرجى المحاولة مرة أخرى أو استخدام إدخال النص المباشر.");
+      toast.error(error instanceof Error ? error.message : "حدث خطأ في تحويل الصوت. يرجى المحاولة مرة أخرى أو استخدام إدخال النص المباشر.");
     } finally {
       setIsProcessing(false);
     }

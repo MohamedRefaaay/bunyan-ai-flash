@@ -65,42 +65,31 @@ const YouTubeSummarizer = ({ onFlashcardsGenerated, onYouTubeProcessed, sessionI
     setVideoInfo(null);
 
     try {
-      const mockVideoInfo = {
-        title: 'فيديو تعليمي عن ' + videoId.substring(0, 8),
-        duration: '15:30'
+      const { data: transcriptData, error: transcriptError } = await supabase.functions.invoke('youtube-transcript', {
+        body: { videoId },
+      });
+
+      if (transcriptError) {
+        throw new Error(transcriptError.message);
+      }
+      if (transcriptData.error) {
+        throw new Error(transcriptData.error);
+      }
+
+      const { transcript, title } = transcriptData;
+
+      const fetchedVideoInfo = {
+        title: title,
+        duration: 'غير متاح'
       };
-      setVideoInfo(mockVideoInfo);
-
-      const mockTranscript = `
-      مرحباً بكم في هذا الفيديو التعليمي. سنتحدث اليوم عن موضوع مهم جداً في مجال التعليم والتكنولوجيا.
+      setVideoInfo(fetchedVideoInfo);
       
-      النقاط الأساسية التي سنغطيها:
-      1. أهمية التعلم الذاتي في العصر الحديث
-      2. استخدام التكنولوجيا في التعليم
-      3. تطوير المهارات الشخصية
-      4. كيفية الاستفادة من الموارد المتاحة
-      5. التخطيط للمستقبل المهني
-      
-      التعلم الذاتي أصبح ضرورة حتمية في عالم يتطور بسرعة البرق. مع التقدم التكنولوجي المستمر، نحتاج لتطوير قدراتنا باستمرار.
-      
-      استخدام التكنولوجيا في التعليم يفتح آفاق جديدة للتعلم. من خلال التطبيقات الذكية والمنصات التعليمية، يمكن للطلاب الوصول للمعرفة في أي وقت ومكان.
-      
-      تطوير المهارات الشخصية مثل التفكير النقدي وحل المشكلات أمر بالغ الأهمية. هذه المهارات تساعد في التعامل مع تحديات الحياة والعمل.
-      
-      الاستفادة من الموارد المتاحة تتطلب معرفة بكيفية البحث والتقييم. ليس كل ما موجود على الإنترنت صحيح أو مفيد.
-      
-      التخطيط للمستقبل المهني يبدأ من الآن. تحديد الأهداف ووضع خطة واضحة للوصول إليها أمر ضروري.
-      
-      في الختام، التعلم رحلة مستمرة لا تنتهي. كل يوم فرصة جديدة لتعلم شيء مفيد وتطوير أنفسنا.
-      `;
-
       const summaryPrompt = `قم بتحليل وتلخيص محتوى هذا الفيديو التعليمي من يوتيوب:
 
-العنوان: ${mockVideoInfo.title}
-المدة: ${mockVideoInfo.duration}
+العنوان: ${fetchedVideoInfo.title}
 
 محتوى الفيديو:
-${mockTranscript}
+${transcript}
 
 أريد منك:
 1. ملخص شامل للفيديو (3-4 فقرات)
@@ -122,12 +111,11 @@ ${mockTranscript}
       
       setSummary(analysis.summary);
       setKeyPoints(analysis.keyPoints || []);
-      setVideoInfo(mockVideoInfo);
       
       await onYouTubeProcessed(
-        mockVideoInfo.title,
+        fetchedVideoInfo.title,
         videoUrl,
-        mockTranscript,
+        transcript,
         analysis.summary
       );
       
@@ -270,7 +258,6 @@ ${keyPoints.map((point, index) => `${index + 1}. ${point}`).join('\n')}
             <h3 className="font-medium text-gray-900 mb-2">معلومات الفيديو:</h3>
             <div className="space-y-1 text-sm text-gray-600">
               <p><strong>العنوان:</strong> {videoInfo.title}</p>
-              <p><strong>المدة:</strong> {videoInfo.duration}</p>
             </div>
           </div>
         )}
@@ -339,7 +326,7 @@ ${keyPoints.map((point, index) => `${index + 1}. ${point}`).join('\n')}
           <p>• يدعم روابط يوتيوب بجميع الصيغ</p>
           <p>• يحلل المحتوى ويستخرج النقاط المهمة</p>
           <p>• ينشئ بطاقات تعليمية تفاعلية</p>
-          <p>• ملاحظة: هذا مثال تجريبي، في التطبيق الحقيقي يحتاج API يوتيوب</p>
+          <p>• ملاحظة: هذه الميزة تتطلب أن يكون لدى الفيديو نص (caption) متاح.</p>
         </div>
       </CardContent>
     </Card>
