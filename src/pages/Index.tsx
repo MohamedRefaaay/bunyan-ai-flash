@@ -1,186 +1,99 @@
 
-import React, { useState } from 'react';
-import { Separator } from '@/components/ui/separator';
-import { Upload, Bot, BarChart3, Users, Cloud, BookText, BookOpen, Brain } from 'lucide-react';
-
-import AudioUploader from '@/components/AudioUploader';
-import FlashcardGenerator from '@/components/FlashcardGenerator';
-import FlashcardPreview from '@/components/FlashcardPreview';
-import AICardEditor from '@/components/AICardEditor';
-import AISummary from '@/components/AISummary';
-import AnalyticsDashboard from '@/components/AnalyticsDashboard';
-import SmartRecommendationEngine from '@/components/SmartRecommendationEngine';
-import FlashcardPersonalization from '@/components/FlashcardPersonalization';
-import VisualFlashcardGenerator from '@/components/VisualFlashcardGenerator';
-import CommunityModule from '@/components/CommunityModule';
-import CloudIntegration from '@/components/CloudIntegration';
-import DocumentAnalyzer from '@/components/document/DocumentAnalyzer';
-import type { Flashcard } from '@/types/flashcard';
-import WelcomeSection from '@/components/pages/index/WelcomeSection';
-import FeaturesTabs from '@/components/pages/index/FeaturesTabs';
-import QuickStats from '@/components/pages/index/QuickStats';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowRight, BookOpen, Brain, Bot, BarChart3 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const Index = () => {
+  const navigate = useNavigate();
   const { isRTL } = useLanguage();
-  const [transcript, setTranscript] = useState('');
-  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [selectedCard, setSelectedCard] = useState<Flashcard | null>(null);
-  const [showAnalytics, setShowAnalytics] = useState(false);
-  const [showEditor, setShowEditor] = useState(false);
-
-  const handleFileUpload = (file: File) => {
-    console.log('File uploaded:', file.name);
-    setTranscript('');
-    setFlashcards([]);
-  };
-
-  const handleTranscriptGenerated = (newTranscript: string) => {
-    setTranscript(newTranscript);
-  };
-
-  const handleFlashcardsGenerated = (newFlashcards: Flashcard[]) => {
-    setFlashcards(newFlashcards);
-  };
-
-  const handleCardEdit = (card: Flashcard) => {
-    setSelectedCard(card);
-    setShowEditor(true);
-  };
-
-  const handleCardUpdate = (updatedCard: Flashcard) => {
-    setFlashcards(prev => 
-      prev.map(card => card.id === updatedCard.id ? updatedCard : card)
-    );
-    setShowEditor(false);
-    setSelectedCard(null);
-  };
-
-  const handleStyleChange = (styles: any) => {
-    console.log('Style changed:', styles);
-  };
-
-  const handleRecommendationsApply = (recommendations: any) => {
-    console.log('Recommendations applied:', recommendations);
-  };
-
-  const handleVisualCardsGenerated = (visualCards: Flashcard[]) => {
-    setFlashcards(prev => [...prev, ...visualCards]);
-  };
 
   const features = [
     {
-      id: 'document-analyzer',
-      title: 'محلل ومُلخص المستندات الذكي',
       icon: Brain,
-      description: 'تحليل شامل للمستندات مع ملخصات ذكية وخرائط ذهنية',
-      component: <DocumentAnalyzer />
+      title: 'محلل المستندات الذكي',
+      description: 'تحليل وتلخيص المستندات باستخدام الذكاء الاصطناعي'
     },
     {
-      id: 'upload',
-      title: 'رفع ومعالجة الصوت',
-      icon: Upload,
-      description: 'ارفع ملفاتك الصوتية أو سجل مباشرةً',
-      component: <AudioUploader onFileUpload={handleFileUpload} onTranscriptGenerated={handleTranscriptGenerated} />
-    },
-    {
-      id: 'summary',
-      title: 'التحليل الذكي الشامل',
-      icon: BookText,
-      description: 'تحليل متكامل مع ملخص وبطاقات تعليمية وتوصيات ذكية',
-      component: <AISummary transcript={transcript} onFlashcardsGenerated={handleFlashcardsGenerated} />
-    },
-    {
-      id: 'generator',
-      title: 'مولد البطاقات الذكي',
       icon: Bot,
-      description: 'استخدم الذكاء الاصطناعي لإنشاء بطاقات تعليمية',
-      component: <FlashcardGenerator 
-        transcript={transcript} 
-        onFlashcardsGenerated={handleFlashcardsGenerated}
-        isProcessing={isProcessing}
-        setIsProcessing={setIsProcessing}
-      />
+      title: 'مولد البطاقات التعليمية',
+      description: 'تحويل المحاضرات إلى بطاقات تعليمية تفاعلية'
     },
     {
-      id: 'preview',
-      title: 'معاينة البطاقات',
-      icon: BookOpen,
-      description: 'اعرض وراجع البطاقات المُنشأة',
-      component: <FlashcardPreview flashcards={flashcards} onCardEdit={handleCardEdit} />
-    },
-    {
-      id: 'editor',
-      title: 'محرر البطاقات الذكي',
-      icon: Bot,
-      description: 'عدل وحسن البطاقات باستخدام الذكاء الاصطناعي',
-      component: showEditor && selectedCard ? (
-        <AICardEditor 
-          card={selectedCard} 
-          onCardUpdate={handleCardUpdate} 
-          onClose={() => setShowEditor(false)} 
-        />
-      ) : (
-        <div className="text-center text-gray-500 py-8">
-          <Bot className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-          <p>اختر بطاقة من المعاينة لتحريرها</p>
-        </div>
-      )
-    },
-    {
-      id: 'analytics',
-      title: 'تحليل الأداء',
       icon: BarChart3,
-      description: 'تتبع تقدمك ونتائج التعلم',
-      component: <AnalyticsDashboard isVisible={showAnalytics} onClose={() => setShowAnalytics(false)} />
-    },
-    {
-      id: 'recommendations',
-      title: 'التوصيات الذكية',
-      icon: Bot,
-      description: 'احصل على توصيات مخصصة لتحسين التعلم',
-      component: <SmartRecommendationEngine transcript={transcript} onRecommendationsApply={handleRecommendationsApply} />
-    },
-    {
-      id: 'personalization',
-      title: 'التخصيص الشخصي',
-      icon: Bot,
-      description: 'خصص تجربة التعلم حسب احتياجاتك',
-      component: <FlashcardPersonalization onStyleChange={handleStyleChange} />
-    },
-    {
-      id: 'visual',
-      title: 'البطاقات المرئية',
-      icon: Bot,
-      description: 'أنشئ بطاقات تحتوي على صور ومخططات',
-      component: <VisualFlashcardGenerator transcript={transcript} onVisualCardsGenerated={handleVisualCardsGenerated} />
-    },
-    {
-      id: 'community',
-      title: 'مجتمع التعلم',
-      icon: Users,
-      description: 'شارك واستكشف البطاقات مع المجتمع',
-      component: <CommunityModule />
-    },
-    {
-      id: 'cloud',
-      title: 'التكامل السحابي',
-      icon: Cloud,
-      description: 'احفظ وزامن بطاقاتك عبر التخزين السحابي',
-      component: <CloudIntegration />
-    },
+      title: 'تحليل الأداء المتقدم',
+      description: 'تتبع التقدم وتحسين عملية التعلم'
+    }
   ];
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
-      <WelcomeSection isRTL={isRTL} />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className="container mx-auto px-4 py-16">
+        {/* Hero Section */}
+        <div className="text-center mb-16">
+          <div className="flex items-center justify-center mb-6">
+            <BookOpen className="h-16 w-16 text-blue-600" />
+          </div>
+          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+            مرحباً بك في بنيان الذكي
+          </h1>
+          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+            منصة متقدمة لتحويل المحاضرات والمستندات إلى بطاقات تعليمية ذكية باستخدام أحدث تقنيات الذكاء الاصطناعي
+          </p>
+          <Button 
+            size="lg" 
+            className="gap-2 text-lg px-8 py-6"
+            onClick={() => navigate('/dashboard')}
+          >
+            ابدأ الآن
+            <ArrowRight className="h-5 w-5" />
+          </Button>
+        </div>
 
-      <Separator />
+        {/* Features Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+          {features.map((feature, index) => (
+            <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+              <CardHeader className="text-center pb-4">
+                <div className="flex justify-center mb-4">
+                  <div className="p-4 bg-blue-100 rounded-full">
+                    <feature.icon className="h-8 w-8 text-blue-600" />
+                  </div>
+                </div>
+                <CardTitle className="text-xl">{feature.title}</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center">
+                <p className="text-gray-600">{feature.description}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
-      <FeaturesTabs features={features} />
-
-      <QuickStats isRTL={isRTL} />
+        {/* CTA Section */}
+        <div className="text-center">
+          <Card className="bg-gradient-to-r from-blue-600 to-purple-600 border-0 text-white max-w-2xl mx-auto">
+            <CardContent className="p-8">
+              <h2 className="text-2xl font-bold mb-4">
+                جاهز لتحويل طريقة تعلمك؟
+              </h2>
+              <p className="mb-6 opacity-90">
+                انضم إلى آلاف الطلاب الذين يستخدمون بنيان الذكي لتحسين تجربة التعلم
+              </p>
+              <Button 
+                size="lg" 
+                variant="secondary"
+                className="gap-2"
+                onClick={() => navigate('/dashboard')}
+              >
+                ادخل إلى لوحة التحكم
+                <ArrowRight className="h-5 w-5" />
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };

@@ -2,8 +2,13 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { TrendingUp, Clock, Users, BookOpen } from 'lucide-react';
+import type { Flashcard } from '@/types/flashcard';
 
-const DashboardStats = () => {
+interface DashboardStatsProps {
+  flashcards?: Flashcard[];
+}
+
+const DashboardStats = ({ flashcards = [] }: DashboardStatsProps) => {
   const stats = [
     {
       title: 'كفاءة التعلم',
@@ -21,7 +26,7 @@ const DashboardStats = () => {
     },
     {
       title: 'البطاقات المنشأة',
-      value: '0',
+      value: flashcards.length.toString(),
       icon: Users,
       color: 'bg-green-100 text-green-600',
       bgColor: 'bg-green-50'

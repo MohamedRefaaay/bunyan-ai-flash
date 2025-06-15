@@ -1,37 +1,78 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Clock, Users, Upload } from 'lucide-react';
+import { Clock, Users, Upload, Brain, Bot, BarChart3, BookOpen, Lightbulb } from 'lucide-react';
 
-const ActionCards = () => {
+interface ActionCardsProps {
+  onFeatureSelect?: (feature: string) => void;
+}
+
+const ActionCards = ({ onFeatureSelect }: ActionCardsProps) => {
   const cards = [
     {
-      title: 'عرض السجل',
-      description: 'ستظهر محاضراتك الفعالية هنا',
-      icon: Clock,
-      bgColor: 'bg-orange-50',
-      iconColor: 'text-orange-600'
+      id: 'document-analyzer',
+      title: 'محلل المستندات الذكي',
+      description: 'تحليل وتلخيص المستندات باستخدام الذكاء الاصطناعي',
+      icon: Brain,
+      bgColor: 'bg-purple-50',
+      iconColor: 'text-purple-600'
     },
     {
-      title: 'مراجعة البطاقات',
-      description: 'دراسة البطاقات المنشأة',
-      icon: Users,
+      id: 'upload',
+      title: 'رفع الملفات الصوتية',
+      description: 'تحويل الصوت إلى نص ثم إلى بطاقات تعليمية',
+      icon: Upload,
+      bgColor: 'bg-blue-50',
+      iconColor: 'text-blue-600'
+    },
+    {
+      id: 'generator',
+      title: 'مولد البطاقات الذكي',
+      description: 'إنشاء بطاقات تعليمية تفاعلية',
+      icon: Bot,
       bgColor: 'bg-green-50',
       iconColor: 'text-green-600'
     },
     {
-      title: 'رفع محاضرة جديدة',
-      description: 'تحويل الصوت إلى بطاقات تعليمية',
-      icon: Upload,
-      bgColor: 'bg-blue-50',
-      iconColor: 'text-blue-600'
+      id: 'preview',
+      title: 'معاينة البطاقات',
+      description: 'عرض ومراجعة البطاقات المنشأة',
+      icon: BookOpen,
+      bgColor: 'bg-orange-50',
+      iconColor: 'text-orange-600'
+    },
+    {
+      id: 'analytics',
+      title: 'تحليل الأداء',
+      description: 'تتبع التقدم ونتائج التعلم',
+      icon: BarChart3,
+      bgColor: 'bg-red-50',
+      iconColor: 'text-red-600'
+    },
+    {
+      id: 'community',
+      title: 'مجتمع التعلم',
+      description: 'شارك واستكشف البطاقات مع المجتمع',
+      icon: Users,
+      bgColor: 'bg-indigo-50',
+      iconColor: 'text-indigo-600'
     }
   ];
 
+  const handleCardClick = (cardId: string) => {
+    if (onFeatureSelect) {
+      onFeatureSelect(cardId);
+    }
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {cards.map((card, index) => (
-        <Card key={index} className={`${card.bgColor} border-0 hover:shadow-md transition-shadow cursor-pointer`}>
+        <Card 
+          key={index} 
+          className={`${card.bgColor} border-0 hover:shadow-md transition-shadow cursor-pointer`}
+          onClick={() => handleCardClick(card.id)}
+        >
           <CardContent className="p-6 text-center">
             <div className={`inline-flex p-4 rounded-xl ${card.iconColor} bg-white mb-4`}>
               <card.icon className="h-8 w-8" />
