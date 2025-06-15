@@ -1,7 +1,10 @@
+
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, Mic, FileAudio, Loader2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { Upload, Mic, FileAudio, Loader2, Type } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -25,6 +28,7 @@ const AudioUploader = ({ onFileUpload, onTranscriptGenerated }: AudioUploaderPro
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [textInput, setTextInput] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 
@@ -62,10 +66,25 @@ const AudioUploader = ({ onFileUpload, onTranscriptGenerated }: AudioUploaderPro
 
     } catch (error) {
       console.error("خطأ في معالجة الملف:", error);
-      toast.error(`حدث خطأ: ${error instanceof Error ? error.message : 'خطأ غير معروف'}`);
+      
+      if (error instanceof Error && error.message.includes("quota")) {
+        toast.error("تم تجاوز حصة OpenAI API. يرجى استخدام إدخال النص المباشر أو تجديد الحصة.");
+      } else {
+        toast.error(`حدث خطأ: ${error instanceof Error ? error.message : 'خطأ غير معروف'}`);
+      }
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleTextSubmit = () => {
+    if (!textInput.trim()) {
+      toast.error("يرجى إدخال نص للتحليل");
+      return;
+    }
+    
+    onTranscriptGenerated(textInput.trim());
+    toast.success("تم إضافة النص بنجاح!");
   };
 
   const startRecording = async () => {
@@ -127,81 +146,115 @@ const AudioUploader = ({ onFileUpload, onTranscriptGenerated }: AudioUploaderPro
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-blue-900">
           <Upload className="h-5 w-5" />
-          رفع ومعالجة الصوت
+          رفع ومعالجة المحتوى
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div
-          className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-            isDragOver ? 'border-blue-500 bg-blue-100' : 'border-gray-300'
-          }`}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-        >
-          <FileAudio className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-lg font-medium mb-2">اسحب وأفلت الملف الصوتي هنا</p>
-          <p className="text-muted-foreground mb-4">أو اختر ملف من جهازك</p>
-          <Button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isProcessing || isRecording}
-            className="gap-2"
-          >
-            <Upload className="h-4 w-4" />
-            اختيار ملف
-          </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="audio/*,video/*"
-            onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
-            className="hidden"
-          />
-        </div>
+      <CardContent>
+        <Tabs defaultValue="audio" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="audio" className="flex items-center gap-2">
+              <FileAudio className="h-4 w-4" />
+              ملف صوتي
+            </TabsTrigger>
+            <TabsTrigger value="text" className="flex items-center gap-2">
+              <Type className="h-4 w-4" />
+              نص مباشر
+            </TabsTrigger>
+          </TabsList>
 
-        <div className="flex gap-2">
-          <Button
-            onClick={isRecording ? stopRecording : startRecording}
-            variant={isRecording ? "destructive" : "outline"}
-            className="flex-1 gap-2"
-            disabled={isProcessing}
-          >
-            <Mic className="h-4 w-4" />
-            {isRecording ? "إيقاف التسجيل" : "تسجيل صوتي"}
-          </Button>
-        </div>
-
-        {uploadedFile && (
-          <div className="bg-white p-4 rounded-lg border">
-            <div className="flex flex-col sm:flex-row items-center gap-3">
-              <FileAudio className="h-8 w-8 text-blue-600" />
-              <div className="flex-1">
-                <p className="font-medium truncate">{uploadedFile.name}</p>
-                <p className="text-sm text-muted-foreground">
-                  {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
-                </p>
-              </div>
-              {audioUrl && (
-                <audio controls className="w-full max-w-xs rounded-md">
-                  <source src={audioUrl} type={uploadedFile.type} />
-                </audio>
-              )}
+          <TabsContent value="audio" className="space-y-4 mt-4">
+            <div
+              className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                isDragOver ? 'border-blue-500 bg-blue-100' : 'border-gray-300'
+              }`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
+              <FileAudio className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-lg font-medium mb-2">اسحب وأفلت الملف الصوتي هنا</p>
+              <p className="text-muted-foreground mb-4">أو اختر ملف من جهازك</p>
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isProcessing || isRecording}
+                className="gap-2"
+              >
+                <Upload className="h-4 w-4" />
+                اختيار ملف
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="audio/*,video/*"
+                onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
+                className="hidden"
+              />
             </div>
-          </div>
-        )}
 
-        {isProcessing && (
-          <div className="text-center py-4">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-2" />
-            <p className="text-blue-700 font-medium">جاري تحويل الصوت إلى نص...</p>
-            <p className="text-blue-600 text-sm">قد يستغرق هذا بضع دقائق، يعتمد على حجم الملف</p>
-          </div>
-        )}
+            <div className="flex gap-2">
+              <Button
+                onClick={isRecording ? stopRecording : startRecording}
+                variant={isRecording ? "destructive" : "outline"}
+                className="flex-1 gap-2"
+                disabled={isProcessing}
+              >
+                <Mic className="h-4 w-4" />
+                {isRecording ? "إيقاف التسجيل" : "تسجيل صوتي"}
+              </Button>
+            </div>
 
-        <div className="text-xs text-muted-foreground">
-          <p>• نصيحة: يمكنك استخدام مواقع مثل `yt-dlp` لتنزيل الصوت من فيديوهات يوتيوب ثم رفعه هنا.</p>
-          <p>• يدعم ملفات MP3, WAV, M4A, MP4, WEBM.</p>
-          <p>• يتم تحويل الصوت إلى نص تلقائياً باستخدام Whisper API.</p>
+            {uploadedFile && (
+              <div className="bg-white p-4 rounded-lg border">
+                <div className="flex flex-col sm:flex-row items-center gap-3">
+                  <FileAudio className="h-8 w-8 text-blue-600" />
+                  <div className="flex-1">
+                    <p className="font-medium truncate">{uploadedFile.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                  {audioUrl && (
+                    <audio controls className="w-full max-w-xs rounded-md">
+                      <source src={audioUrl} type={uploadedFile.type} />
+                    </audio>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {isProcessing && (
+              <div className="text-center py-4">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-2" />
+                <p className="text-blue-700 font-medium">جاري تحويل الصوت إلى نص...</p>
+                <p className="text-blue-600 text-sm">قد يستغرق هذا بضع دقائق، يعتمد على حجم الملف</p>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="text" className="space-y-4 mt-4">
+            <div className="space-y-4">
+              <Textarea
+                placeholder="أدخل النص الذي تريد تحليله هنا..."
+                value={textInput}
+                onChange={(e) => setTextInput(e.target.value)}
+                className="min-h-[200px] resize-none"
+              />
+              <Button
+                onClick={handleTextSubmit}
+                className="w-full gap-2"
+                disabled={!textInput.trim()}
+              >
+                <Type className="h-4 w-4" />
+                بدء تحليل النص
+              </Button>
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        <div className="text-xs text-muted-foreground mt-4">
+          <p>• يدعم ملفات MP3, WAV, M4A, MP4, WEBM للملفات الصوتية</p>
+          <p>• في حالة مشاكل تحويل الصوت، استخدم إدخال النص المباشر</p>
+          <p>• يمكنك استخدام مواقع مثل `yt-dlp` لتنزيل الصوت من فيديوهات يوتيوب</p>
         </div>
       </CardContent>
     </Card>
