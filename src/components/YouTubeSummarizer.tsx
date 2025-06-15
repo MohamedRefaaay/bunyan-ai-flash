@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +8,7 @@ import { Loader2, Youtube, Play, FileText, BookOpen, Settings, AlertCircle } fro
 import { toast } from 'sonner';
 import { makeAIRequest, getAIProviderConfig } from '@/utils/aiProviders';
 import type { Flashcard } from '@/types/flashcard';
+import { supabase } from '@/integrations/supabase/client';
 
 interface YouTubeSummarizerProps {
   onFlashcardsGenerated: (flashcards: Flashcard[]) => void;
@@ -20,6 +20,7 @@ const YouTubeSummarizer = ({ onFlashcardsGenerated }: YouTubeSummarizerProps) =>
   const [summary, setSummary] = useState('');
   const [keyPoints, setKeyPoints] = useState<string[]>([]);
   const [videoInfo, setVideoInfo] = useState<{title: string, duration: string} | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
   const extractVideoId = (url: string): string | null => {
     const patterns = [
@@ -61,6 +62,7 @@ const YouTubeSummarizer = ({ onFlashcardsGenerated }: YouTubeSummarizerProps) =>
     setSummary('');
     setKeyPoints([]);
     setVideoInfo(null);
+    setSessionId(null);
 
     try {
       // محاكاة استخراج معلومات الفيديو (في التطبيق الحقيقي ستحتاج YouTube API)
@@ -134,8 +136,8 @@ ${mockTranscript}
   };
 
   const generateFlashcardsFromVideo = async () => {
-    if (!summary) {
-      toast.error('يرجى تحليل الفيديو أولاً');
+    if (!summary || !sessionId) {
+      toast.error('يرجى تحليل الفيديو أولاً لإنشاء جلسة');
       return;
     }
 
@@ -175,11 +177,29 @@ ${keyPoints.map((point, index) => `${index + 1}. ${point}`).join('\n')}
       });
 
       const cleanJson = flashcardsResult.replace(/```json|```/g, '').trim();
-      const flashcards = JSON.parse(cleanJson);
+      const flashcards: Flashcard[] = JSON.parse(cleanJson);
       
       if (Array.isArray(flashcards)) {
+        const flashcardsToInsert = flashcards.map(card => ({
+          front: card.front,
+          back: card.back,
+          difficulty: card.difficulty,
+          tags: card.tags,
+          session_id: sessionId,
+          type: 'basic',
+        }));
+
+        const { error: insertError } = await supabase
+          .from('flashcards')
+          .insert(flashcardsToInsert);
+
+        if (insertError) {
+          console.error("Error saving flashcards:", insertError);
+          throw new Error('فشل حفظ البطاقات في قاعدة البيانات.');
+        }
+        
         onFlashcardsGenerated(flashcards);
-        toast.success(`تم إنشاء ${flashcards.length} بطاقة تعليمية من الفيديو!`);
+        toast.success(`تم إنشاء وحفظ ${flashcards.length} بطاقة تعليمية من الفيديو!`);
       } else {
         throw new Error('تنسيق غير صحيح للبطاقات');
       }
