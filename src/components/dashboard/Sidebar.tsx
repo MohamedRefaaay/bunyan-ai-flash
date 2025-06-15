@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { 
@@ -15,7 +14,8 @@ import {
   Cloud,
   BookText,
   Lightbulb,
-  Palette
+  Palette,
+  Youtube
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -28,6 +28,7 @@ const Sidebar = ({ activeFeature, onFeatureChange }: SidebarProps) => {
   const menuItems = [
     { id: null, icon: Home, label: 'لوحة التحكم', active: !activeFeature },
     { id: 'document-analyzer', icon: Brain, label: 'محلل المستندات' },
+    { id: 'youtube', icon: Youtube, label: 'تلخيص يوتيوب' },
     { id: 'upload', icon: Upload, label: 'رفع الملفات الصوتية' },
     { id: 'summary', icon: BookText, label: 'التحليل الذكي' },
     { id: 'generator', icon: Bot, label: 'مولد البطاقات' },

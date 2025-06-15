@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardStats from '@/components/dashboard/DashboardStats';
@@ -17,6 +16,7 @@ import VisualFlashcardGenerator from '@/components/VisualFlashcardGenerator';
 import CommunityModule from '@/components/CommunityModule';
 import CloudIntegration from '@/components/CloudIntegration';
 import DocumentAnalyzer from '@/components/document/DocumentAnalyzer';
+import YouTubeSummarizer from '@/components/YouTubeSummarizer';
 import type { Flashcard } from '@/types/flashcard';
 
 const Dashboard = () => {
@@ -71,6 +71,8 @@ const Dashboard = () => {
     switch (activeFeature) {
       case 'document-analyzer':
         return <DocumentAnalyzer />;
+      case 'youtube':
+        return <YouTubeSummarizer onFlashcardsGenerated={handleFlashcardsGenerated} />;
       case 'upload':
         return <AudioUploader onFileUpload={handleFileUpload} onTranscriptGenerated={handleTranscriptGenerated} />;
       case 'summary':

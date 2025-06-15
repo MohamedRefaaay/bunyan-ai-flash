@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Clock, Users, Upload, Brain, Bot, BarChart3, BookOpen, Lightbulb } from 'lucide-react';
+import { Clock, Users, Upload, Brain, Bot, BarChart3, BookOpen, Lightbulb, Youtube } from 'lucide-react';
 
 interface ActionCardsProps {
   onFeatureSelect?: (feature: string) => void;
@@ -16,6 +15,14 @@ const ActionCards = ({ onFeatureSelect }: ActionCardsProps) => {
       icon: Brain,
       bgColor: 'bg-purple-50',
       iconColor: 'text-purple-600'
+    },
+    {
+      id: 'youtube',
+      title: 'تلخيص فيديوهات يوتيوب',
+      description: 'استخراج وتلخيص محتوى الفيديوهات التعليمية',
+      icon: Youtube,
+      bgColor: 'bg-red-50',
+      iconColor: 'text-red-600'
     },
     {
       id: 'upload',
@@ -46,16 +53,8 @@ const ActionCards = ({ onFeatureSelect }: ActionCardsProps) => {
       title: 'تحليل الأداء',
       description: 'تتبع التقدم ونتائج التعلم',
       icon: BarChart3,
-      bgColor: 'bg-red-50',
-      iconColor: 'text-red-600'
-    },
-    {
-      id: 'community',
-      title: 'مجتمع التعلم',
-      description: 'شارك واستكشف البطاقات مع المجتمع',
-      icon: Users,
-      bgColor: 'bg-indigo-50',
-      iconColor: 'text-indigo-600'
+      bgColor: 'bg-pink-50',
+      iconColor: 'text-pink-600'
     }
   ];
 
