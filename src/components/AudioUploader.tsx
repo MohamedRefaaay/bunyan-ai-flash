@@ -2,13 +2,23 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, Mic, FileAudio, Loader2, Play, Pause } from "lucide-react";
+import { Upload, Mic, FileAudio, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AudioUploaderProps {
   onFileUpload: (file: File) => void;
   onTranscriptGenerated: (transcript: string) => void;
 }
+
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = error => reject(error);
+  });
+};
 
 const AudioUploader = ({ onFileUpload, onTranscriptGenerated }: AudioUploaderProps) => {
   const [isDragOver, setIsDragOver] = useState(false);
@@ -34,44 +44,26 @@ const AudioUploader = ({ onFileUpload, onTranscriptGenerated }: AudioUploaderPro
   const processAudioFile = async (file: File) => {
     setIsProcessing(true);
     try {
-      // محاكاة معالجة الملف الصوتي
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      const audioBase64 = await fileToBase64(file);
+
+      const { data, error } = await supabase.functions.invoke('transcribe', {
+        body: { audio: audioBase64 },
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
       
-      const mockTranscript = `مرحباً بكم في هذه المحاضرة التعليمية الشاملة حول أساسيات التعلم الآلي.
+      if (!data.text) {
+        throw new Error("لم يتمكن الذكاء الاصطناعي من تحويل الصوت.");
+      }
 
-في محاضرة اليوم، سنتناول المفاهيم الأساسية التي تشكل أساس التعلم الآلي:
-
-1. **التعلم المُشرف عليه (Supervised Learning)**
-   - التعريف والخصائص الرئيسية
-   - أمثلة: الانحدار الخطي، التصنيف
-   - بيانات التدريب مع أمثلة مُصنفة
-   - الهدف: تعلم التطابق من المدخلات إلى المخرجات
-
-2. **التعلم غير المُشرف عليه (Unsupervised Learning)**
-   - العثور على الأنماط في البيانات غير المُصنفة
-   - خوارزميات التجميع (K-means، التجميع الهرمي)
-   - تقليل الأبعاد (PCA، t-SNE)
-   - تعلم قواعد الترابط
-
-3. **التعلم المُعزز (Reinforcement Learning)**
-   - تفاعل الوكيل مع البيئة
-   - نظام التعلم القائم على المكافآت
-   - التطبيقات في الألعاب والروبوتات والأنظمة المستقلة
-   - Q-learning وسياسات التدرج
-
-4. **الخوارزميات الرئيسية**
-   - أشجار القرار: سهلة التفسير، تتعامل مع البيانات الفئوية
-   - الغابة العشوائية: طريقة التجميع، تقلل من فرط التدريب
-   - آلات المتجهات الداعمة: فعالة للبيانات عالية الأبعاد
-   - الشبكات العصبية: التعلم العميق، التعرف على الأنماط المعقدة
-
-تذكروا أن التعلم الآلي الناجح يتطلب معالجة جيدة للبيانات وهندسة الميزات واختيار النموذج المناسب بناءً على مجال مشكلتكم المحددة.`;
-
-      onTranscriptGenerated(mockTranscript);
+      onTranscriptGenerated(data.text);
       toast.success("تم تحويل الصوت إلى نص بنجاح!");
+
     } catch (error) {
       console.error("خطأ في معالجة الملف:", error);
-      toast.error("حدث خطأ أثناء معالجة الملف الصوتي");
+      toast.error(`حدث خطأ: ${error instanceof Error ? error.message : 'خطأ غير معروف'}`);
     } finally {
       setIsProcessing(false);
     }
@@ -89,15 +81,15 @@ const AudioUploader = ({ onFileUpload, onTranscriptGenerated }: AudioUploaderPro
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'audio/wav' });
-        const file = new File([blob], 'recording.wav', { type: 'audio/wav' });
+        const blob = new Blob(chunks, { type: 'audio/webm' });
+        const file = new File([blob], 'recording.webm', { type: 'audio/webm' });
         handleFileSelect(file);
         stream.getTracks().forEach(track => track.stop());
       };
 
       mediaRecorder.start();
       setIsRecording(true);
-      toast.success("بدأ التسجيل...");
+      toast.info("بدأ التسجيل...");
     } catch (error) {
       console.error("خطأ في بدء التسجيل:", error);
       toast.error("تعذر الوصول إلى الميكروفون");
@@ -108,7 +100,7 @@ const AudioUploader = ({ onFileUpload, onTranscriptGenerated }: AudioUploaderPro
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
-      toast.success("تم إيقاف التسجيل");
+      toast.success("تم إيقاف التسجيل وجاري المعالجة");
     }
   };
 
@@ -134,15 +126,15 @@ const AudioUploader = ({ onFileUpload, onTranscriptGenerated }: AudioUploaderPro
   return (
     <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-blue-900">
           <Upload className="h-5 w-5" />
-          رفع الملفات الصوتية
+          رفع ملف صوتي (من جهازك أو يوتيوب)
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div
           className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-            isDragOver ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
+            isDragOver ? 'border-blue-500 bg-blue-100' : 'border-gray-300'
           }`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -153,7 +145,7 @@ const AudioUploader = ({ onFileUpload, onTranscriptGenerated }: AudioUploaderPro
           <p className="text-muted-foreground mb-4">أو اختر ملف من جهازك</p>
           <Button
             onClick={() => fileInputRef.current?.click()}
-            disabled={isProcessing}
+            disabled={isProcessing || isRecording}
             className="gap-2"
           >
             <Upload className="h-4 w-4" />
@@ -182,16 +174,16 @@ const AudioUploader = ({ onFileUpload, onTranscriptGenerated }: AudioUploaderPro
 
         {uploadedFile && (
           <div className="bg-white p-4 rounded-lg border">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-center gap-3">
               <FileAudio className="h-8 w-8 text-blue-600" />
               <div className="flex-1">
-                <p className="font-medium">{uploadedFile.name}</p>
+                <p className="font-medium truncate">{uploadedFile.name}</p>
                 <p className="text-sm text-muted-foreground">
                   {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
                 </p>
               </div>
               {audioUrl && (
-                <audio controls className="max-w-xs">
+                <audio controls className="w-full max-w-xs rounded-md">
                   <source src={audioUrl} type={uploadedFile.type} />
                 </audio>
               )}
@@ -202,15 +194,15 @@ const AudioUploader = ({ onFileUpload, onTranscriptGenerated }: AudioUploaderPro
         {isProcessing && (
           <div className="text-center py-4">
             <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-2" />
-            <p className="text-blue-700 font-medium">جاري معالجة الملف الصوتي...</p>
-            <p className="text-blue-600 text-sm">قد يستغرق هذا بضع دقائق</p>
+            <p className="text-blue-700 font-medium">جاري تحويل الصوت إلى نص...</p>
+            <p className="text-blue-600 text-sm">قد يستغرق هذا بضع دقائق، يعتمد على حجم الملف</p>
           </div>
         )}
 
         <div className="text-xs text-muted-foreground">
-          <p>• يدعم ملفات MP3, WAV, M4A, MP4</p>
-          <p>• الحد الأقصى لحجم الملف: 100 MB</p>
-          <p>• يتم تحويل الصوت إلى نص تلقائياً</p>
+          <p>• نصيحة: يمكنك استخدام مواقع مثل `yt-dlp` لتنزيل الصوت من فيديوهات يوتيوب ثم رفعه هنا.</p>
+          <p>• يدعم ملفات MP3, WAV, M4A, MP4, WEBM.</p>
+          <p>• يتم تحويل الصوت إلى نص تلقائياً باستخدام Whisper API.</p>
         </div>
       </CardContent>
     </Card>

@@ -1,10 +1,8 @@
-
 import React, { useState } from 'react';
 import { Separator } from '@/components/ui/separator';
-import { Upload, Youtube, Bot, BarChart3, Users, Cloud, BookText, BookOpen } from 'lucide-react';
+import { Upload, Bot, BarChart3, Users, Cloud, BookText, BookOpen } from 'lucide-react';
 
 import AudioUploader from '@/components/AudioUploader';
-import YouTubeIntegration from '@/components/YouTubeIntegration';
 import FlashcardGenerator from '@/components/FlashcardGenerator';
 import FlashcardPreview from '@/components/FlashcardPreview';
 import AICardEditor from '@/components/AICardEditor';
@@ -32,7 +30,8 @@ const Index = () => {
 
   const handleFileUpload = (file: File) => {
     console.log('File uploaded:', file.name);
-    // In a real app, this would process the file
+    setTranscript('');
+    setFlashcards([]);
   };
 
   const handleTranscriptGenerated = (newTranscript: string) => {
@@ -71,17 +70,10 @@ const Index = () => {
   const features = [
     {
       id: 'upload',
-      title: 'رفع الملفات الصوتية',
+      title: 'رفع ومعالجة الصوت',
       icon: Upload,
-      description: 'ارفع ملفاتك الصوتية للمحاضرات والدروس',
+      description: 'ارفع ملفاتك الصوتية أو سجل مباشرةً',
       component: <AudioUploader onFileUpload={handleFileUpload} onTranscriptGenerated={handleTranscriptGenerated} />
-    },
-    {
-      id: 'youtube',
-      title: 'استيراد من يوتيوب',
-      icon: Youtube,
-      description: 'استخرج المحتوى من مقاطع اليوتيوب التعليمية',
-      component: <YouTubeIntegration onTranscriptGenerated={handleTranscriptGenerated} />
     },
     {
       id: 'generator',
