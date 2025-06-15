@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { KeyRound, Bot, Check, AlertCircle } from "lucide-react";
+import { KeyRound, Bot, Check, AlertCircle, ExternalLink } from "lucide-react";
 
 export type AIProvider = 'openai' | 'gemini' | 'anthropic';
 
@@ -22,9 +22,23 @@ interface AIProviderConfig {
   placeholder: string;
   models: string[];
   icon: React.ReactNode;
+  setupUrl: string;
 }
 
 const aiProviders: AIProviderConfig[] = [
+  {
+    id: 'gemini',
+    name: 'Google Gemini',
+    nameEn: 'Google Gemini',
+    description: 'نموذج الذكاء الاصطناعي المتقدم من جوجل - مجاني للاستخدام الشخصي',
+    descriptionEn: 'Advanced AI model from Google - Free for personal use',
+    keyLabel: 'مفتاح Gemini API',
+    keyLabelEn: 'Gemini API Key',
+    placeholder: 'AIzaSy...',
+    models: ['gemini-2.0-flash-exp', 'gemini-1.5-pro', 'gemini-1.5-flash'],
+    icon: <Bot className="h-5 w-5" />,
+    setupUrl: 'https://aistudio.google.com/app/apikey'
+  },
   {
     id: 'openai',
     name: 'OpenAI',
@@ -35,19 +49,8 @@ const aiProviders: AIProviderConfig[] = [
     keyLabelEn: 'OpenAI API Key',
     placeholder: 'sk-...',
     models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'],
-    icon: <Bot className="h-5 w-5" />
-  },
-  {
-    id: 'gemini',
-    name: 'Google Gemini',
-    nameEn: 'Google Gemini',
-    description: 'نموذج الذكاء الاصطناعي المتقدم من جوجل',
-    descriptionEn: 'Advanced AI model from Google',
-    keyLabel: 'مفتاح Gemini API',
-    keyLabelEn: 'Gemini API Key',
-    placeholder: 'AIzaSy...',
-    models: ['gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-1.5-flash'],
-    icon: <Bot className="h-5 w-5" />
+    icon: <Bot className="h-5 w-5" />,
+    setupUrl: 'https://platform.openai.com/api-keys'
   },
   {
     id: 'anthropic',
@@ -59,7 +62,8 @@ const aiProviders: AIProviderConfig[] = [
     keyLabelEn: 'Anthropic API Key',
     placeholder: 'sk-ant-...',
     models: ['claude-3-5-sonnet', 'claude-3-5-haiku', 'claude-3-opus'],
-    icon: <Bot className="h-5 w-5" />
+    icon: <Bot className="h-5 w-5" />,
+    setupUrl: 'https://console.anthropic.com/account/keys'
   }
 ];
 
@@ -68,7 +72,7 @@ interface AIProviderSettingsProps {
 }
 
 const AIProviderSettings = ({ isRTL = true }: AIProviderSettingsProps) => {
-  const [selectedProvider, setSelectedProvider] = useState<AIProvider>('openai');
+  const [selectedProvider, setSelectedProvider] = useState<AIProvider>('gemini');
   const [apiKeys, setApiKeys] = useState<Record<AIProvider, string>>({
     openai: '',
     gemini: '',
@@ -76,7 +80,7 @@ const AIProviderSettings = ({ isRTL = true }: AIProviderSettingsProps) => {
   });
   const [selectedModels, setSelectedModels] = useState<Record<AIProvider, string>>({
     openai: 'gpt-4o-mini',
-    gemini: 'gemini-2.0-flash',
+    gemini: 'gemini-2.0-flash-exp',
     anthropic: 'claude-3-5-sonnet'
   });
 
@@ -88,6 +92,8 @@ const AIProviderSettings = ({ isRTL = true }: AIProviderSettingsProps) => {
     const storedAnthropic = localStorage.getItem("anthropic_api_key");
     
     if (storedProvider) setSelectedProvider(storedProvider);
+    else setSelectedProvider('gemini'); // Gemini كالافتراضي
+    
     if (storedOpenAI) setApiKeys(prev => ({ ...prev, openai: storedOpenAI }));
     if (storedGemini) setApiKeys(prev => ({ ...prev, gemini: storedGemini }));
     if (storedAnthropic) setApiKeys(prev => ({ ...prev, anthropic: storedAnthropic }));
@@ -115,8 +121,6 @@ const AIProviderSettings = ({ isRTL = true }: AIProviderSettingsProps) => {
 
     toast.success(isRTL ? "تم حفظ الإعدادات بنجاح!" : "Settings saved successfully!");
   };
-
-  const currentProvider = aiProviders.find(p => p.id === selectedProvider)!;
 
   return (
     <Card className="max-w-4xl mx-auto">
@@ -160,6 +164,30 @@ const AIProviderSettings = ({ isRTL = true }: AIProviderSettingsProps) => {
           </Select>
         </div>
 
+        {/* توصية Gemini */}
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <Bot className="h-5 w-5 text-green-600 mt-0.5" />
+            <div className="space-y-2">
+              <h4 className="font-medium text-green-900">
+                {isRTL ? "🌟 موصى به: Google Gemini" : "🌟 Recommended: Google Gemini"}
+              </h4>
+              <p className="text-sm text-green-800">
+                {isRTL 
+                  ? "Gemini مجاني للاستخدام الشخصي ويوفر أداءً ممتازاً للغة العربية. احصل على مفتاح API مجاني من Google AI Studio."
+                  : "Gemini is free for personal use and provides excellent Arabic language performance. Get a free API key from Google AI Studio."
+                }
+              </p>
+              <Button variant="outline" size="sm" asChild className="text-green-700 border-green-300">
+                <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                  <ExternalLink className="h-4 w-4" />
+                  {isRTL ? "احصل على مفتاح Gemini مجاناً" : "Get Free Gemini API Key"}
+                </a>
+              </Button>
+            </div>
+          </div>
+        </div>
+
         {/* مفاتيح API */}
         <div className="space-y-4">
           <Label className="text-base font-medium">
@@ -178,6 +206,12 @@ const AIProviderSettings = ({ isRTL = true }: AIProviderSettingsProps) => {
                     {isRTL ? "محفوظ" : "Saved"}
                   </Badge>
                 )}
+                <Button variant="ghost" size="sm" asChild>
+                  <a href={provider.setupUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
+                    <ExternalLink className="h-3 w-3" />
+                    <span className="text-xs">{isRTL ? "الحصول على المفتاح" : "Get Key"}</span>
+                  </a>
+                </Button>
               </div>
               <Input
                 id={`${provider.id}-key`}
@@ -231,6 +265,12 @@ const AIProviderSettings = ({ isRTL = true }: AIProviderSettingsProps) => {
                   {isRTL 
                     ? "• لن يتم مشاركة المفاتيح مع أي طرف ثالث"
                     : "• Keys are never shared with third parties"
+                  }
+                </li>
+                <li>
+                  {isRTL 
+                    ? "• Gemini مجاني ومُوصى به للاستخدام الشخصي"
+                    : "• Gemini is free and recommended for personal use"
                   }
                 </li>
                 <li>
