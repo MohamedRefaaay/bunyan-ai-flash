@@ -1,11 +1,11 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Youtube, Play, FileText, BookOpen, Settings, AlertCircle } from 'lucide-react';
+import { Loader2, Youtube, Play, FileText, BookOpen, Settings, AlertCircle, Type } from 'lucide-react';
 import { toast } from 'sonner';
 import { makeAIRequest, getAIProviderConfig } from '@/utils/aiProviders';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,6 +28,7 @@ const YouTubeSummarizer = ({ onFlashcardsGenerated, onYouTubeProcessed, sessionI
   const [summary, setSummary] = useState('');
   const [keyPoints, setKeyPoints] = useState<string[]>([]);
   const [videoInfo, setVideoInfo] = useState<{title: string, duration: string} | null>(null);
+  const [flashcardFormat, setFlashcardFormat] = useState<'qa' | 'cloze' | 'mcq' | 'true_false'>('qa');
 
   const extractVideoId = (url: string): string | null => {
     const patterns = [
@@ -109,7 +110,8 @@ ${transcript}
 }`;
 
       const analysisResult = await makeAIRequest(summaryPrompt, {
-        systemPrompt: 'أنت خبير في تحليل وتلخيص المحتوى التعليمي. أجب بصيغة JSON صحيحة فقط.'
+        systemPrompt: 'أنت خبير في تحليل وتلخيص المحتوى التعليمي. أجب بصيغة JSON صحيحة فقط.',
+        provider: 'gemini'
       });
 
       let analysis;
@@ -155,30 +157,35 @@ ${transcript}
     setIsProcessing(true);
 
     try {
-      const flashcardPrompt = `بناءً على تحليل هذا الفيديو التعليمي، قم بإنشاء 12 بطاقة تعليمية:
-
+      const basePromptInfo = `
+بناءً على تحليل هذا الفيديو التعليمي:
 الملخص: ${summary}
-
 النقاط الرئيسية:
 ${keyPoints.map((point, index) => `${index + 1}. ${point}`).join('\n')}
 
-يجب أن تكون الإجابة بصيغة JSON فقط مع هذا التنسيق:
+يجب أن تكون الإجابة بصيغة JSON فقط مع هذا التنسيق (لا تقم بإضافة التوقيع، سأضيفه بنفسي):
 [
   {
     "id": "1",
-    "front": "السؤال هنا", 
-    "back": "الإجابة هنا",
+    "front": "...", 
+    "back": "...",
     "difficulty": "medium",
     "category": "فيديو يوتيوب",
-    "tags": ["يوتيوب", "تعليمي"],
+    "tags": ["يوتيوب", "bunyan_ai"],
     "source": "YouTube Video"
   }
-]
+]`;
 
-تأكد من تنويع أنواع الأسئلة وتغطية المحتوى بشكل شامل.`;
+    const prompts = {
+      qa: `قم بإنشاء 10 بطاقات تعليمية بصيغة سؤال وجواب. ${basePromptInfo}`,
+      cloze: `قم بإنشاء 10 بطاقات تعليمية بصيغة ملء الفراغات (Cloze). استخدم صيغة Anki القياسية {{c1::الكلمة}} في حقل "front". ${basePromptInfo}`,
+      mcq: `قم بإنشاء 10 بطاقات تعليمية بصيغة اختيار من متعدد. يجب أن يحتوي حقل "front" على السؤال، وحقل "back" على الخيارات مع توضيح الإجابة الصحيحة. ${basePromptInfo}`,
+      true_false: `قم بإنشاء 10 بطاقات تعليمية بصيغة صح/خطأ. يجب أن يحتوي حقل "front" على العبارة، وحقل "back" على "صح" أو "خطأ" مع شرح موجز. ${basePromptInfo}`
+    };
 
-      const flashcardsResult = await makeAIRequest(flashcardPrompt, {
-        systemPrompt: 'أنت خبير في إنشاء البطاقات التعليمية من المحتوى المرئي. أجب بصيغة JSON صحيحة فقط.'
+      const flashcardsResult = await makeAIRequest(prompts[flashcardFormat], {
+        systemPrompt: 'أنت خبير في إنشاء البطاقات التعليمية من المحتوى المرئي. أجب بصيغة JSON صحيحة فقط.',
+        provider: 'gemini'
       });
 
       let flashcards: any[];
@@ -192,7 +199,12 @@ ${keyPoints.map((point, index) => `${index + 1}. ${point}`).join('\n')}
       }
       
       if (Array.isArray(flashcards)) {
-        onFlashcardsGenerated(flashcards as Flashcard[]);
+        const flashcardsWithSignature = flashcards.map(card => ({
+            ...card,
+            back: card.back ? `${card.back}\n\n📘 Made with Bunyan_Anki_AI` : '📘 Made with Bunyan_Anki_AI'
+        }));
+        onFlashcardsGenerated(flashcardsWithSignature as Flashcard[]);
+        toast.success(`تم إنشاء ${flashcardsWithSignature.length} بطاقة تعليمية بنجاح!`);
       } else {
         throw new Error('تنسيق غير صحيح للبطاقات');
       }
@@ -255,11 +267,30 @@ ${keyPoints.map((point, index) => `${index + 1}. ${point}`).join('\n')}
 
         {/* إنشاء البطاقات */}
         {summary && (
-          <YouTubeFlashcardsButton
-            onGenerate={generateFlashcardsFromVideo}
-            isProcessing={isProcessing}
-            disabled={isProcessing || !config || !sessionId}
-          />
+          <div className="mt-6 space-y-4">
+            <div className="space-y-3">
+              <h3 className="font-medium text-gray-900 flex items-center gap-2">
+                <Type className="h-5 w-5 text-gray-700" />
+                اختر شكل البطاقة:
+              </h3>
+              <Select onValueChange={(value) => setFlashcardFormat(value as any)} defaultValue="qa">
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="اختر نوع البطاقة" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="qa">سؤال و جواب</SelectItem>
+                  <SelectItem value="cloze">ملء الفراغات (Cloze)</SelectItem>
+                  <SelectItem value="mcq">اختيار من متعدد</SelectItem>
+                  <SelectItem value="true_false">صح / خطأ</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <YouTubeFlashcardsButton
+              onGenerate={generateFlashcardsFromVideo}
+              isProcessing={isProcessing}
+              disabled={isProcessing || !config || !sessionId}
+            />
+          </div>
         )}
 
         {/* معلومات إضافية */}
