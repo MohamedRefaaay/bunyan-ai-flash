@@ -18,6 +18,8 @@ import CloudIntegration from '@/components/CloudIntegration';
 import DocumentAnalyzer from '@/components/document/DocumentAnalyzer';
 import YouTubeSummarizer from '@/components/YouTubeSummarizer';
 import type { Flashcard } from '@/types/flashcard';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const Dashboard = () => {
   const [activeFeature, setActiveFeature] = useState<string | null>(null);
@@ -27,19 +29,92 @@ const Dashboard = () => {
   const [selectedCard, setSelectedCard] = useState<Flashcard | null>(null);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [showEditor, setShowEditor] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
-  const handleFileUpload = (file: File) => {
+  const handleFeatureChange = (feature: string | null) => {
+    setActiveFeature(feature);
+    if (feature === 'document-analyzer' || feature === 'youtube' || feature === 'upload' || feature === null) {
+      setTranscript('');
+      setSessionId(null);
+    }
+  };
+
+  const handleFileUpload = async (file: File) => {
     console.log('File uploaded:', file.name);
     setTranscript('');
     setFlashcards([]);
+    setSessionId(null);
+
+    try {
+      const { data, error } = await supabase
+        .from('sessions')
+        .insert({ title: file.name, source_type: 'audio' })
+        .select('id')
+        .single();
+
+      if (error) throw error;
+      
+      if (data?.id) {
+        setSessionId(data.id);
+        toast.success(`تم إنشاء جلسة للملف: ${file.name}`);
+      }
+    } catch (error) {
+      console.error('Error creating session:', error);
+      toast.error('فشل إنشاء جلسة للملف الصوتي.');
+    }
   };
 
-  const handleTranscriptGenerated = (newTranscript: string) => {
+  const handleTranscriptGenerated = async (newTranscript: string) => {
     setTranscript(newTranscript);
+    if (!sessionId) {
+      // Don't show an error if no session, might be just text input
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('sessions')
+        .update({ transcript: newTranscript, status: 'transcribed' })
+        .eq('id', sessionId);
+      
+      if (error) throw error;
+      toast.success('تم حفظ النص بنجاح في الجلسة.');
+    } catch (error) {
+      console.error('Error updating session with transcript:', error);
+      toast.error('فشل حفظ النص.');
+    }
   };
 
-  const handleFlashcardsGenerated = (newFlashcards: Flashcard[]) => {
-    setFlashcards(newFlashcards);
+  const handleFlashcardsGenerated = async (newFlashcards: Flashcard[]) => {
+    if (sessionId) {
+      try {
+        const flashcardsToInsert = newFlashcards.map(card => ({
+            front: card.front,
+            back: card.back,
+            type: card.type,
+            difficulty: card.difficulty,
+            tags: card.tags || [],
+            session_id: sessionId,
+        }));
+
+        const { data: insertedFlashcards, error: insertError } = await supabase
+          .from('flashcards')
+          .insert(flashcardsToInsert)
+          .select();
+
+        if (insertError) throw insertError;
+
+        if (insertedFlashcards) {
+            setFlashcards((prev) => [...prev, ...insertedFlashcards as Flashcard[]]);
+            toast.success(`تم إنشاء وحفظ ${insertedFlashcards.length} بطاقة تعليمية!`);
+        }
+      } catch (error) {
+        console.error('Error saving flashcards:', error);
+        toast.error('حدث خطأ في حفظ البطاقات.');
+      }
+    } else {
+      setFlashcards(newFlashcards);
+    }
   };
 
   const handleCardEdit = (card: Flashcard) => {
@@ -47,12 +122,32 @@ const Dashboard = () => {
     setShowEditor(true);
   };
 
-  const handleCardUpdate = (updatedCard: Flashcard) => {
-    setFlashcards(prev => 
-      prev.map(card => card.id === updatedCard.id ? updatedCard : card)
-    );
-    setShowEditor(false);
-    setSelectedCard(null);
+  const handleCardUpdate = async (updatedCard: Flashcard) => {
+    try {
+      const { error } = await supabase
+        .from('flashcards')
+        .update({
+            front: updatedCard.front,
+            back: updatedCard.back,
+            difficulty: updatedCard.difficulty,
+            type: updatedCard.type,
+            tags: updatedCard.tags,
+            updated_at: new Date().toISOString(),
+        })
+        .eq('id', updatedCard.id);
+
+        if (error) throw error;
+
+        setFlashcards(prev => 
+            prev.map(card => card.id === updatedCard.id ? updatedCard : card)
+        );
+        setShowEditor(false);
+        setSelectedCard(null);
+        toast.success('تم تحديث البطاقة بنجاح!');
+    } catch (error) {
+        console.error('Error updating flashcard:', error);
+        toast.error('فشل تحديث البطاقة.');
+    }
   };
 
   const handleStyleChange = (styles: any) => {
@@ -121,7 +216,7 @@ const Dashboard = () => {
         <div className="flex gap-6">
           {/* Sidebar */}
           <div className="w-64 shrink-0">
-            <Sidebar activeFeature={activeFeature} onFeatureChange={setActiveFeature} />
+            <Sidebar activeFeature={activeFeature} onFeatureChange={handleFeatureChange} />
           </div>
 
           {/* Main Content */}
@@ -136,7 +231,7 @@ const Dashboard = () => {
                 {renderFeatureComponent()}
               </div>
             ) : (
-              <ActionCards onFeatureSelect={setActiveFeature} />
+              <ActionCards onFeatureSelect={handleFeatureChange} />
             )}
           </div>
         </div>
