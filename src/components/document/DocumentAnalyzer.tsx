@@ -18,9 +18,10 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.j
 interface DocumentAnalyzerProps {
   onFlashcardsGenerated: (flashcards: Flashcard[]) => void;
   onDocumentProcessed: (content: string, name: string) => Promise<void>;
+  sessionId: string | null;
 }
 
-const DocumentAnalyzer = ({ onFlashcardsGenerated, onDocumentProcessed }: DocumentAnalyzerProps) => {
+const DocumentAnalyzer = ({ onFlashcardsGenerated, onDocumentProcessed, sessionId }: DocumentAnalyzerProps) => {
   const [documentContent, setDocumentContent] = useState("");
   const [fileName, setFileName] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -141,6 +142,7 @@ const DocumentAnalyzer = ({ onFlashcardsGenerated, onDocumentProcessed }: Docume
               documentContent={documentContent} 
               fileName={fileName}
               onFlashcardsGenerated={onFlashcardsGenerated}
+              sessionId={sessionId}
             />
           </TabsContent>
         </Tabs>

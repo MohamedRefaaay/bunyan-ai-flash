@@ -114,13 +114,44 @@ const Dashboard = () => {
     }
   };
 
+  const handleYouTubeProcessed = async (title: string, url: string, transcript: string, summary: string) => {
+    setTranscript(transcript);
+    setFlashcards([]);
+    setSessionId(null);
+
+    try {
+        const { data, error } = await supabase
+            .from('sessions')
+            .insert({
+                title: title,
+                source_type: 'youtube',
+                source_url: url,
+                transcript: transcript,
+                summary: summary,
+                status: 'summarized'
+            })
+            .select('id')
+            .single();
+
+        if (error) throw error;
+        
+        if (data?.id) {
+            setSessionId(data.id);
+            toast.success(`تم إنشاء جلسة للفيديو: ${title}`);
+        }
+    } catch (error) {
+        console.error('Error creating session for YouTube video:', error);
+        toast.error('فشل إنشاء جلسة للفيديو.');
+    }
+  };
+
   const handleFlashcardsGenerated = async (newFlashcards: Flashcard[]) => {
     if (sessionId) {
       try {
         const flashcardsToInsert = newFlashcards.map(card => ({
             front: card.front,
             back: card.back,
-            type: card.type,
+            type: card.type || "basic",
             difficulty: card.difficulty,
             tags: card.tags || [],
             session_id: sessionId,
@@ -143,6 +174,7 @@ const Dashboard = () => {
       }
     } else {
       setFlashcards(newFlashcards);
+      toast.warn("تم إنشاء البطاقات ولكن لم يتم العثور على جلسة لحفظها.");
     }
   };
 
@@ -194,9 +226,9 @@ const Dashboard = () => {
   const renderFeatureComponent = () => {
     switch (activeFeature) {
       case 'document-analyzer':
-        return <DocumentAnalyzer onFlashcardsGenerated={handleFlashcardsGenerated} onDocumentProcessed={handleDocumentProcessed} />;
+        return <DocumentAnalyzer onFlashcardsGenerated={handleFlashcardsGenerated} onDocumentProcessed={handleDocumentProcessed} sessionId={sessionId} />;
       case 'youtube':
-        return <YouTubeSummarizer onFlashcardsGenerated={handleFlashcardsGenerated} />;
+        return <YouTubeSummarizer onFlashcardsGenerated={handleFlashcardsGenerated} onYouTubeProcessed={handleYouTubeProcessed} />;
       case 'upload':
         return <AudioUploader onFileUpload={handleFileUpload} onTranscriptGenerated={handleTranscriptGenerated} />;
       case 'summary':

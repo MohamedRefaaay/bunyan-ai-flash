@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,15 +12,15 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface YouTubeSummarizerProps {
   onFlashcardsGenerated: (flashcards: Flashcard[]) => void;
+  onYouTubeProcessed: (title: string, url: string, transcript: string, summary: string) => Promise<void>;
 }
 
-const YouTubeSummarizer = ({ onFlashcardsGenerated }: YouTubeSummarizerProps) => {
+const YouTubeSummarizer = ({ onFlashcardsGenerated, onYouTubeProcessed }: YouTubeSummarizerProps) => {
   const [videoUrl, setVideoUrl] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [summary, setSummary] = useState('');
   const [keyPoints, setKeyPoints] = useState<string[]>([]);
   const [videoInfo, setVideoInfo] = useState<{title: string, duration: string} | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
 
   const extractVideoId = (url: string): string | null => {
     const patterns = [
@@ -63,7 +62,6 @@ const YouTubeSummarizer = ({ onFlashcardsGenerated }: YouTubeSummarizerProps) =>
     setSummary('');
     setKeyPoints([]);
     setVideoInfo(null);
-    setSessionId(null);
 
     try {
       const mockVideoInfo = {
@@ -123,27 +121,15 @@ ${mockTranscript}
       
       setSummary(analysis.summary);
       setKeyPoints(analysis.keyPoints || []);
+      setVideoInfo(mockVideoInfo);
       
-      const { data: sessionData, error: sessionError } = await supabase
-        .from('sessions')
-        .insert({
-          title: mockVideoInfo.title,
-          source_type: 'youtube',
-          source_url: videoUrl,
-          summary: analysis.summary,
-          transcript: mockTranscript,
-        })
-        .select('id')
-        .single();
+      await onYouTubeProcessed(
+        mockVideoInfo.title,
+        videoUrl,
+        mockTranscript,
+        analysis.summary
+      );
       
-      if (sessionError) {
-        console.error('Error creating session:', sessionError);
-        throw new Error('فشل إنشاء جلسة التحليل.');
-      }
-      
-      setSessionId(sessionData.id);
-      
-      toast.success('تم تحليل الفيديو وإنشاء جلسة بنجاح!');
     } catch (error) {
       console.error('Error analyzing video:', error);
       toast.error(error instanceof Error ? error.message : 'حدث خطأ في تحليل الفيديو');
@@ -153,8 +139,8 @@ ${mockTranscript}
   };
 
   const generateFlashcardsFromVideo = async () => {
-    if (!summary || !sessionId) {
-      toast.error('يرجى تحليل الفيديو أولاً لإنشاء جلسة');
+    if (!summary) {
+      toast.error('يرجى تحليل الفيديو أولاً لإنشاء البطاقات');
       return;
     }
 
@@ -197,26 +183,7 @@ ${keyPoints.map((point, index) => `${index + 1}. ${point}`).join('\n')}
       const flashcards: any[] = JSON.parse(cleanJson);
       
       if (Array.isArray(flashcards)) {
-        const flashcardsToInsert = flashcards.map(card => ({
-          front: card.front,
-          back: card.back,
-          difficulty: card.difficulty,
-          tags: card.tags,
-          session_id: sessionId,
-          type: 'basic',
-        }));
-
-        const { error: insertError } = await supabase
-          .from('flashcards')
-          .insert(flashcardsToInsert);
-
-        if (insertError) {
-          console.error("Error saving flashcards:", insertError);
-          throw new Error('فشل حفظ البطاقات في قاعدة البيانات.');
-        }
-        
         onFlashcardsGenerated(flashcards as Flashcard[]);
-        toast.success(`تم إنشاء وحفظ ${flashcards.length} بطاقة تعليمية من الفيديو!`);
       } else {
         throw new Error('تنسيق غير صحيح للبطاقات');
       }

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,7 +21,7 @@ import {
   Settings
 } from "lucide-react";
 import { toast } from "sonner";
-import { SummaryData, DocumentSummarizerProps } from "./types";
+import { SummaryData, DocumentSummarizerProps as OriginalDocSummarizerProps } from "./types";
 import { generateComprehensivePrompt, generateDownloadContent } from "./utils";
 import { makeAIRequest, getAIProviderConfig } from "@/utils/aiProviders";
 import SummaryTab from "./tabs/SummaryTab";
@@ -36,11 +35,14 @@ import AdvancedTab from "./tabs/AdvancedTab";
 import { supabase } from "@/integrations/supabase/client";
 import type { Flashcard } from "@/types/flashcard";
 
+interface DocumentSummarizerProps extends OriginalDocSummarizerProps {
+  onFlashcardsGenerated: (flashcards: Flashcard[]) => void;
+  sessionId: string | null;
+}
 
-const DocumentSummarizer = ({ documentContent, fileName, onFlashcardsGenerated }: DocumentSummarizerProps & { onFlashcardsGenerated: (flashcards: Flashcard[]) => void }) => {
+const DocumentSummarizer = ({ documentContent, fileName, onFlashcardsGenerated, sessionId }: DocumentSummarizerProps) => {
   const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [sessionId, setSessionId] = useState<string | null>(null);
   const [isGeneratingCards, setIsGeneratingCards] = useState(false);
 
   const generateComprehensiveSummary = async () => {
@@ -49,20 +51,8 @@ const DocumentSummarizer = ({ documentContent, fileName, onFlashcardsGenerated }
       return;
     }
 
-    const config = getAIProviderConfig();
-    if (!config) {
-      toast.error("الرجاء إدخال مفتاح API في الإعدادات أولاً.", {
-        action: {
-          label: "إعدادات",
-          onClick: () => window.location.href = "/settings"
-        }
-      });
-      return;
-    }
-
     setIsAnalyzing(true);
     setSummaryData(null);
-    setSessionId(null);
 
     const comprehensivePrompt = generateComprehensivePrompt(documentContent);
 
@@ -77,27 +67,25 @@ const DocumentSummarizer = ({ documentContent, fileName, onFlashcardsGenerated }
         
         setSummaryData(analysisData);
         
-        const { data: sessionData, error: sessionError } = await supabase
-          .from('sessions')
-          .insert({
-            title: fileName,
-            source_type: 'document',
-            summary: analysisData.summary.narrative_summary,
-            transcript: documentContent,
-          })
-          .select('id')
-          .single();
-
-        if (sessionError) {
-          console.error("Error creating session:", sessionError);
-          throw new Error('فشل إنشاء جلسة التحليل.');
+        if (sessionId) {
+          const summaryText = analysisData?.summary?.narrative_summary || analysisData?.mainSummary || '';
+          const { error: updateError } = await supabase
+            .from('sessions')
+            .update({
+              summary: summaryText,
+              status: 'summarized'
+            })
+            .eq('id', sessionId);
+          
+          if (updateError) {
+             console.error("Error updating session:", updateError);
+             throw new Error('فشل تحديث الجلسة بالملخص.');
+          }
+          toast.success("تم إنشاء التحليل الشامل وتحديث الجلسة بنجاح!");
+        } else {
+           toast.warn("تم إنشاء التحليل ولكن لم يتم العثور على جلسة لتحديثها.");
         }
 
-        if (sessionData) {
-          setSessionId(sessionData.id);
-        }
-
-        toast.success("تم إنشاء التحليل الشامل وحفظ الجلسة بنجاح!");
       } catch (e){
         console.error("Error parsing AI response or saving session", e);
         toast.error("خطأ في تحليل استجابة الذكاء الاصطناعي أو حفظ الجلسة");
@@ -152,26 +140,7 @@ ${generateDownloadContent(summaryData, fileName)}
       const flashcards: any[] = JSON.parse(cleanJson);
       
       if (Array.isArray(flashcards)) {
-        const flashcardsToInsert = flashcards.map(card => ({
-          front: card.front,
-          back: card.back,
-          difficulty: card.difficulty,
-          tags: card.tags,
-          session_id: sessionId,
-          type: 'basic',
-        }));
-
-        const { error: insertError } = await supabase
-          .from('flashcards')
-          .insert(flashcardsToInsert);
-
-        if (insertError) {
-          console.error("Error saving flashcards:", insertError);
-          throw new Error('فشل حفظ البطاقات في قاعدة البيانات.');
-        }
-        
         onFlashcardsGenerated(flashcards as Flashcard[]);
-        toast.success(`تم إنشاء وحفظ ${flashcards.length} بطاقة تعليمية من المستند!`);
       } else {
         throw new Error('تنسيق غير صحيح للبطاقات');
       }
@@ -182,7 +151,6 @@ ${generateDownloadContent(summaryData, fileName)}
       setIsGeneratingCards(false);
     }
   };
-
 
   const handleDownloadSummary = () => {
     if (!summaryData) {
