@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookOpen, Upload, Youtube, Bot, BarChart3, Users, Cloud, Languages, Settings as SettingsIcon } from 'lucide-react';
+import { BookOpen, Upload, Youtube, Bot, BarChart3, Users, Cloud, Languages, Settings as SettingsIcon, BookText } from 'lucide-react';
 
 import Header from '@/components/navigation/Header';
 import AudioUploader from '@/components/AudioUploader';
@@ -12,6 +12,7 @@ import YouTubeIntegration from '@/components/YouTubeIntegration';
 import FlashcardGenerator from '@/components/FlashcardGenerator';
 import FlashcardPreview from '@/components/FlashcardPreview';
 import AICardEditor from '@/components/AICardEditor';
+import AISummary from '@/components/AISummary';
 import AnalyticsDashboard from '@/components/AnalyticsDashboard';
 import SmartRecommendationEngine from '@/components/SmartRecommendationEngine';
 import FlashcardPersonalization from '@/components/FlashcardPersonalization';
@@ -94,6 +95,13 @@ const Index = () => {
         isProcessing={isProcessing}
         setIsProcessing={setIsProcessing}
       />
+    },
+    {
+      id: 'summary',
+      title: 'ملخص بالذكاء الاصطناعي',
+      icon: BookText,
+      description: 'أنشئ ملخصًا للمحتوى باستخدام Gemini.',
+      component: <AISummary transcript={transcript} />
     },
     {
       id: 'preview',
@@ -221,7 +229,7 @@ const Index = () => {
 
         {/* Features Tabs */}
         <Tabs defaultValue="upload" className="w-full">
-          <TabsList className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2 h-auto p-2 bg-white/50 backdrop-blur-sm">
+          <TabsList className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 h-auto p-2 bg-white/50 backdrop-blur-sm">
             {features.map((feature) => (
               <TabsTrigger
                 key={feature.id}
