@@ -8,42 +8,45 @@ import type { Flashcard } from "@/types/flashcard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Buffer } from 'buffer';
+import * as pdfjsLib from 'pdfjs-dist';
+
+// Set worker path for pdfjs-dist
+// This is crucial for it to work in a web environment.
+// @ts-ignore
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.mjs`;
 
 interface DocumentAnalyzerProps {
   onFlashcardsGenerated: (flashcards: Flashcard[]) => void;
+  onDocumentProcessed: (content: string, name: string) => Promise<void>;
 }
 
-const DocumentAnalyzer = ({ onFlashcardsGenerated }: DocumentAnalyzerProps) => {
+const DocumentAnalyzer = ({ onFlashcardsGenerated, onDocumentProcessed }: DocumentAnalyzerProps) => {
   const [documentContent, setDocumentContent] = useState("");
   const [fileName, setFileName] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleDocumentProcessed = (content: string, name: string) => {
-    setDocumentContent(content);
-    setFileName(name);
-  };
-
   const extractTextFromPDF = async (file: File): Promise<string> => {
     try {
-        const pdf = (await import('pdf-parse')).default;
-        const arrayBuffer = await file.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        const data = await pdf(buffer);
-        if (!data || !data.text) {
-          throw new Error("لم يتمكن من استخراج أي نص من ملف PDF.");
-        }
-        return data.text;
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullText = "";
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items.map(item => 'str' in item ? item.str : '').join(" ");
+        fullText += pageText + "\n";
+      }
+      if (!fullText.trim()) {
+        throw new Error("لم يتمكن من استخراج أي نص من ملف PDF.");
+      }
+      return fullText;
     } catch (error) {
-        console.error("Error extracting PDF text:", error);
-        if (error instanceof Error && error.message.includes('fs.readFileSync')) {
-             throw new Error("حدث خطأ توافق مع المتصفح عند معالجة PDF.");
-        }
-        throw new Error("فشل في استخراج النص من ملف PDF. قد يكون الملف محمياً أو تالفاً.");
+      console.error("Error extracting PDF text:", error);
+      throw new Error("فشل في استخراج النص من ملف PDF. قد يكون الملف محمياً أو تالفاً أو بتنسيق غير مدعوم.");
     }
   };
-
+  
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -61,7 +64,9 @@ const DocumentAnalyzer = ({ onFlashcardsGenerated }: DocumentAnalyzerProps) => {
             setIsProcessing(false);
             return;
         }
-        handleDocumentProcessed(text, file.name);
+        setDocumentContent(text);
+        setFileName(file.name);
+        await onDocumentProcessed(text, file.name);
         toast.success(`تمت معالجة الملف ${file.name} بنجاح.`);
     } catch (error) {
         console.error("خطأ في معالجة الملف:", error);

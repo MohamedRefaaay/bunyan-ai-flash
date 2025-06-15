@@ -85,6 +85,35 @@ const Dashboard = () => {
     }
   };
 
+  const handleDocumentProcessed = async (content: string, name: string) => {
+    setTranscript(content);
+    setFlashcards([]);
+    setSessionId(null);
+
+    try {
+        const { data, error } = await supabase
+            .from('sessions')
+            .insert({ 
+                title: name, 
+                source_type: 'document',
+                transcript: content,
+                status: 'transcribed'
+            })
+            .select('id')
+            .single();
+
+        if (error) throw error;
+        
+        if (data?.id) {
+            setSessionId(data.id);
+            toast.success(`تم إنشاء جلسة للمستند: ${name}`);
+        }
+    } catch (error) {
+        console.error('Error creating session for document:', error);
+        toast.error('فشل إنشاء جلسة للمستند.');
+    }
+  };
+
   const handleFlashcardsGenerated = async (newFlashcards: Flashcard[]) => {
     if (sessionId) {
       try {
@@ -165,7 +194,7 @@ const Dashboard = () => {
   const renderFeatureComponent = () => {
     switch (activeFeature) {
       case 'document-analyzer':
-        return <DocumentAnalyzer onFlashcardsGenerated={handleFlashcardsGenerated} />;
+        return <DocumentAnalyzer onFlashcardsGenerated={handleFlashcardsGenerated} onDocumentProcessed={handleDocumentProcessed} />;
       case 'youtube':
         return <YouTubeSummarizer onFlashcardsGenerated={handleFlashcardsGenerated} />;
       case 'upload':
