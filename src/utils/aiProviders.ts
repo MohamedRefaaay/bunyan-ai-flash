@@ -6,9 +6,9 @@ export interface AIProviderConfig {
   provider: AIProvider;
 }
 
-export const getAIProviderConfig = (): AIProviderConfig | null => {
-  const selectedProvider = localStorage.getItem("ai_provider") as AIProvider || 'gemini';
-  const apiKey = localStorage.getItem(`${selectedProvider}_api_key`);
+export const getAIProviderConfig = (provider?: AIProvider): AIProviderConfig | null => {
+  const providerToGet = provider || localStorage.getItem("ai_provider") as AIProvider || 'gemini';
+  const apiKey = localStorage.getItem(`${providerToGet}_api_key`);
   
   if (!apiKey) {
     return null;
@@ -19,14 +19,14 @@ export const getAIProviderConfig = (): AIProviderConfig | null => {
   
   const defaultModels = {
     openai: 'gpt-4o-mini',
-    gemini: 'gemini-2.0-flash-exp',
+    gemini: 'gemini-1.5-flash', // Updated default model for better performance
     anthropic: 'claude-3-5-sonnet'
   };
 
   return {
     apiKey,
-    model: models[selectedProvider] || defaultModels[selectedProvider],
-    provider: selectedProvider
+    model: models[providerToGet] || defaultModels[providerToGet],
+    provider: providerToGet
   };
 };
 
@@ -35,14 +35,16 @@ export const makeAIRequest = async (prompt: string, options?: {
   provider?: AIProvider;
   model?: string;
 }) => {
-  const config = getAIProviderConfig();
+  const providerToUse = options?.provider;
+  const config = getAIProviderConfig(providerToUse);
   
   if (!config) {
-    throw new Error('لم يتم العثور على مفتاح API. يرجى إعداد مزود الذكاء الاصطناعي في الإعدادات.');
+    const requestedProviderName = providerToUse || 'الافتراضي';
+    throw new Error(`لم يتم العثور على مفتاح API للمزود '${requestedProviderName}'. يرجى إعداده في الإعدادات.`);
   }
 
-  const provider = options?.provider || config.provider;
-  const model = options?.model || config.model;
+  const { provider, model: configModel, apiKey } = config;
+  const model = options?.model || configModel;
   const systemPrompt = options?.systemPrompt || 'أنت مساعد ذكي ومفيد. أجب باللغة العربية إلا إذا طُلب منك غير ذلك.';
 
   console.log(`Making AI request with provider: ${provider}, model: ${model}`);
@@ -50,11 +52,11 @@ export const makeAIRequest = async (prompt: string, options?: {
   try {
     switch (provider) {
       case 'openai':
-        return await makeOpenAIRequest(config.apiKey, model, prompt, systemPrompt);
+        return await makeOpenAIRequest(apiKey, model, prompt, systemPrompt);
       case 'gemini':
-        return await makeGeminiRequest(config.apiKey, model, prompt, systemPrompt);
+        return await makeGeminiRequest(apiKey, model, prompt, systemPrompt);
       case 'anthropic':
-        return await makeAnthropicRequest(config.apiKey, model, prompt, systemPrompt);
+        return await makeAnthropicRequest(apiKey, model, prompt, systemPrompt);
       default:
         throw new Error(`مزود غير مدعوم: ${provider}`);
     }
@@ -197,7 +199,7 @@ export const validateAPIKey = async (provider: AIProvider, apiKey: string): Prom
         await makeOpenAIRequest(apiKey, 'gpt-4o-mini', testPrompt, systemPrompt);
         break;
       case 'gemini':
-        await makeGeminiRequest(apiKey, 'gemini-2.0-flash-exp', testPrompt, systemPrompt);
+        await makeGeminiRequest(apiKey, 'gemini-1.5-flash', testPrompt, systemPrompt);
         break;
       case 'anthropic':
         await makeAnthropicRequest(apiKey, 'claude-3-5-haiku', testPrompt, systemPrompt);
