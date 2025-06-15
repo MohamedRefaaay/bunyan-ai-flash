@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -128,7 +127,7 @@ const AudioUploader = ({ onFileUpload, onTranscriptGenerated }: AudioUploaderPro
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-blue-900">
           <Upload className="h-5 w-5" />
-          رفع ملف صوتي (من جهازك أو يوتيوب)
+          رفع ومعالجة الصوت
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

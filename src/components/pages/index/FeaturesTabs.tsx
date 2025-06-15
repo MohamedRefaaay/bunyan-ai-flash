@@ -18,12 +18,12 @@ interface FeaturesTabsProps {
 const FeaturesTabs = ({ features }: FeaturesTabsProps) => {
   return (
     <Tabs defaultValue="upload" className="w-full">
-      <TabsList className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 h-auto p-2 bg-white/50 backdrop-blur-sm">
+      <TabsList className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 h-auto p-2 bg-white/50 backdrop-blur-sm">
         {features.map((feature) => (
           <TabsTrigger
             key={feature.id}
             value={feature.id}
-            className="flex flex-col items-center gap-2 p-4 h-auto data-[state=active]:bg-white data-[state=active]:shadow-md"
+            className="flex flex-col items-center gap-2 p-2 h-auto data-[state=active]:bg-white data-[state=active]:shadow-md"
           >
             <feature.icon className="h-6 w-6" />
             <span className="text-xs text-center leading-tight">{feature.title}</span>
