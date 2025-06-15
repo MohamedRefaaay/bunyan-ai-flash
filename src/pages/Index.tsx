@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Separator } from '@/components/ui/separator';
 import { Upload, Bot, BarChart3, Users, Cloud, BookText, BookOpen } from 'lucide-react';
@@ -13,6 +14,7 @@ import FlashcardPersonalization from '@/components/FlashcardPersonalization';
 import VisualFlashcardGenerator from '@/components/VisualFlashcardGenerator';
 import CommunityModule from '@/components/CommunityModule';
 import CloudIntegration from '@/components/CloudIntegration';
+import DocumentAnalyzer from '@/components/document/DocumentAnalyzer';
 import type { Flashcard } from '@/types/flashcard';
 import WelcomeSection from '@/components/pages/index/WelcomeSection';
 import FeaturesTabs from '@/components/pages/index/FeaturesTabs';
