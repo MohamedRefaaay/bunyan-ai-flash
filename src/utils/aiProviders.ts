@@ -130,7 +130,7 @@ const makeGeminiRequest = async (apiKey: string, model: string, prompt: string, 
         requestBody.systemInstruction = {
           parts: [{ text: systemPrompt }]
         };
-        if (prompt.toLowerCase().includes('json')) {
+        if (prompt.toLowerCase().includes('json') || systemPrompt.toLowerCase().includes('json')) {
             requestBody.generationConfig.responseMimeType = "application/json";
         }
     }

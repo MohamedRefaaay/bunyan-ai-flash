@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,13 +8,13 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Youtube, Play, FileText, BookOpen, Settings, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { makeAIRequest, getAIProviderConfig } from '@/utils/aiProviders';
-import type { Flashcard } from '@/types/flashcard';
 import { supabase } from '@/integrations/supabase/client';
 import YouTubeVideoInput from './youtube/YouTubeVideoInput';
 import YouTubeVideoInfoCard from './youtube/YouTubeVideoInfo';
 import YouTubeSummaryTabs from './youtube/YouTubeSummaryTabs';
 import YouTubeFlashcardsButton from './youtube/YouTubeFlashcardsButton';
-import type { YouTubeVideoInfo, Flashcard } from './youtube/youtubeSummarizerTypes';
+import type { YouTubeVideoInfo } from './youtube/youtubeSummarizerTypes';
+import type { Flashcard } from '@/types/flashcard';
 
 interface YouTubeSummarizerProps {
   onFlashcardsGenerated: (flashcards: Flashcard[]) => void;
