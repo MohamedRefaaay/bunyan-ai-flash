@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { Upload, Mic, FileAudio, Loader2, Type } from "lucide-react";
+import { Upload, Mic, FileAudio, Loader2, Type, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface AudioUploaderProps {
   onFileUpload: (file: File) => void;
@@ -67,11 +68,8 @@ const AudioUploader = ({ onFileUpload, onTranscriptGenerated }: AudioUploaderPro
     } catch (error) {
       console.error("خطأ في معالجة الملف:", error);
       
-      if (error instanceof Error && error.message.includes("quota")) {
-        toast.error("تم تجاوز حصة OpenAI API. يرجى استخدام إدخال النص المباشر أو تجديد الحصة.");
-      } else {
-        toast.error(`حدث خطأ: ${error instanceof Error ? error.message : 'خطأ غير معروف'}`);
-      }
+      // Show user-friendly error message
+      toast.error("يرجى استخدام إدخال النص المباشر في التبويب الثاني");
     } finally {
       setIsProcessing(false);
     }
@@ -150,17 +148,43 @@ const AudioUploader = ({ onFileUpload, onTranscriptGenerated }: AudioUploaderPro
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="audio" className="w-full">
+        <Alert className="mb-4 border-amber-200 bg-amber-50">
+          <AlertCircle className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-800">
+            حالياً يُنصح باستخدام إدخال النص المباشر للحصول على أفضل النتائج مع Gemini AI
+          </AlertDescription>
+        </Alert>
+
+        <Tabs defaultValue="text" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="text" className="flex items-center gap-2">
+              <Type className="h-4 w-4" />
+              نص مباشر (مُوصى به)
+            </TabsTrigger>
             <TabsTrigger value="audio" className="flex items-center gap-2">
               <FileAudio className="h-4 w-4" />
               ملف صوتي
             </TabsTrigger>
-            <TabsTrigger value="text" className="flex items-center gap-2">
-              <Type className="h-4 w-4" />
-              نص مباشر
-            </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="text" className="space-y-4 mt-4">
+            <div className="space-y-4">
+              <Textarea
+                placeholder="أدخل النص الذي تريد تحليله هنا..."
+                value={textInput}
+                onChange={(e) => setTextInput(e.target.value)}
+                className="min-h-[200px] resize-none"
+              />
+              <Button
+                onClick={handleTextSubmit}
+                className="w-full gap-2"
+                disabled={!textInput.trim()}
+              >
+                <Type className="h-4 w-4" />
+                بدء تحليل النص
+              </Button>
+            </div>
+          </TabsContent>
 
           <TabsContent value="audio" className="space-y-4 mt-4">
             <div
@@ -252,9 +276,9 @@ const AudioUploader = ({ onFileUpload, onTranscriptGenerated }: AudioUploaderPro
         </Tabs>
 
         <div className="text-xs text-muted-foreground mt-4">
+          <p>• يُنصح بإستخدام إدخال النص المباشر للحصول على أفضل النتائج</p>
+          <p>• يمكنك استخدام مواقع مثل `yt-dlp` لتنزيل الصوت من فيديوهات يوتيوب ثم نسخ النص</p>
           <p>• يدعم ملفات MP3, WAV, M4A, MP4, WEBM للملفات الصوتية</p>
-          <p>• في حالة مشاكل تحويل الصوت، استخدم إدخال النص المباشر</p>
-          <p>• يمكنك استخدام مواقع مثل `yt-dlp` لتنزيل الصوت من فيديوهات يوتيوب</p>
         </div>
       </CardContent>
     </Card>
