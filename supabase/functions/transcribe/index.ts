@@ -49,9 +49,9 @@ serve(async (req) => {
       throw new Error('No audio data provided')
     }
 
-    const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
-    if (!geminiApiKey) {
-      throw new Error('GEMINI_API_KEY not found in environment variables')
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      throw new Error('OPENAI_API_KEY not found in environment variables')
     }
 
     // The base64 string might have a prefix like `data:audio/webm;base64,`. We need to remove it.
@@ -60,28 +60,36 @@ serve(async (req) => {
     // Process audio in chunks
     const binaryAudio = processBase64Chunks(base64Data)
     
-    // Prepare form data for Gemini API
+    // Prepare form data for Whisper API
     const formData = new FormData()
     const blob = new Blob([binaryAudio], { type: 'audio/webm' })
     formData.append('file', blob, 'audio.webm')
+    formData.append('model', 'whisper-1')
+    formData.append('language', 'ar')
 
-    // Use Gemini API for transcription
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`;
+    // Send to OpenAI Whisper API
+    const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiApiKey}`,
+      },
+      body: formData,
+    })
 
-    // Since Gemini doesn't have direct audio transcription like Whisper, we'll use a different approach
-    // Convert audio to base64 and use Gemini's capabilities
-    const geminiPrompt = `
-    تحويل الصوت إلى نص باللغة العربية. يرجى استخراج النص المنطوق من الملف الصوتي المرفوع وإرجاع النص فقط بدون أي تفسيرات إضافية.
-    `;
-
-    try {
-      // For now, we'll return an error suggesting the user to use text input
-      // as Gemini's audio processing is more complex and requires different implementation
-      throw new Error('يرجى استخدام إدخال النص المباشر حتى يتم تطوير دعم Gemini للصوت. يمكنك نسخ النص ولصقه في تبويب "نص مباشر".');
-    } catch (geminiError) {
-      console.error('Gemini API error:', geminiError);
-      throw new Error('يرجى استخدام إدخال النص المباشر. يمكنك نسخ النص ولصقه في تبويب "نص مباشر".');
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('OpenAI API error:', errorText)
+      throw new Error(`OpenAI API error: ${errorText}`)
     }
+
+    const result = await response.json()
+
+    return new Response(
+      JSON.stringify({ text: result.text }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    )
 
   } catch (error) {
     console.error('Error in transcribe function:', error.message);
