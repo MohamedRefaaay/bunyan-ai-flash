@@ -1,11 +1,8 @@
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { BookOpen, Upload, Youtube, Bot, BarChart3, Users, Cloud, Languages, Settings as SettingsIcon, BookText } from 'lucide-react';
+import { Upload, Youtube, Bot, BarChart3, Users, Cloud, BookText, BookOpen } from 'lucide-react';
 
-import Header from '@/components/navigation/Header';
 import AudioUploader from '@/components/AudioUploader';
 import YouTubeIntegration from '@/components/YouTubeIntegration';
 import FlashcardGenerator from '@/components/FlashcardGenerator';
@@ -18,14 +15,14 @@ import FlashcardPersonalization from '@/components/FlashcardPersonalization';
 import VisualFlashcardGenerator from '@/components/VisualFlashcardGenerator';
 import CommunityModule from '@/components/CommunityModule';
 import CloudIntegration from '@/components/CloudIntegration';
-import Settings from '@/components/Settings';
 import type { Flashcard } from '@/types/flashcard';
 import WelcomeSection from '@/components/pages/index/WelcomeSection';
 import FeaturesTabs from '@/components/pages/index/FeaturesTabs';
 import QuickStats from '@/components/pages/index/QuickStats';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const Index = () => {
-  const [isRTL, setIsRTL] = useState(true);
+  const { isRTL } = useLanguage();
   const [transcript, setTranscript] = useState('');
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -172,41 +169,17 @@ const Index = () => {
       description: 'احفظ وزامن بطاقاتك عبر التخزين السحابي',
       component: <CloudIntegration />
     },
-    {
-      id: 'settings',
-      title: 'الإعدادات',
-      icon: SettingsIcon,
-      description: 'إدارة إعدادات التطبيق ومفاتيح API',
-      component: <Settings />
-    }
   ];
 
   return (
-    <div className={`min-h-screen bg-muted/30 ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
-      <Header />
-      
-      <div className="container mx-auto px-4 py-8 space-y-8">
-        {/* Language Toggle */}
-        <div className="flex justify-end">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsRTL(!isRTL)}
-            className="gap-2"
-          >
-            <Languages className="h-4 w-4" />
-            {isRTL ? 'English' : 'العربية'}
-          </Button>
-        </div>
+    <div className="container mx-auto px-4 py-8 space-y-8">
+      <WelcomeSection isRTL={isRTL} />
 
-        <WelcomeSection isRTL={isRTL} />
+      <Separator />
 
-        <Separator />
+      <FeaturesTabs features={features} />
 
-        <FeaturesTabs features={features} />
-
-        <QuickStats isRTL={isRTL} />
-      </div>
+      <QuickStats isRTL={isRTL} />
     </div>
   );
 };
