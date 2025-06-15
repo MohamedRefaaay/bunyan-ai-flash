@@ -76,6 +76,13 @@ const Index = () => {
       component: <AudioUploader onFileUpload={handleFileUpload} onTranscriptGenerated={handleTranscriptGenerated} />
     },
     {
+      id: 'summary',
+      title: 'التحليل الذكي الشامل',
+      icon: BookText,
+      description: 'تحليل متكامل مع ملخص وبطاقات تعليمية وتوصيات ذكية',
+      component: <AISummary transcript={transcript} onFlashcardsGenerated={handleFlashcardsGenerated} />
+    },
+    {
       id: 'generator',
       title: 'مولد البطاقات الذكي',
       icon: Bot,
@@ -86,13 +93,6 @@ const Index = () => {
         isProcessing={isProcessing}
         setIsProcessing={setIsProcessing}
       />
-    },
-    {
-      id: 'summary',
-      title: 'ملخص بالذكاء الاصطناعي',
-      icon: BookText,
-      description: 'أنشئ ملخصًا للمحتوى باستخدام Gemini.',
-      component: <AISummary transcript={transcript} />
     },
     {
       id: 'preview',
