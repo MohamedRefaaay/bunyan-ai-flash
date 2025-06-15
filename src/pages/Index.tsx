@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Separator } from '@/components/ui/separator';
-import { Upload, Bot, BarChart3, Users, Cloud, BookText, BookOpen } from 'lucide-react';
+import { Upload, Bot, BarChart3, Users, Cloud, BookText, BookOpen, Brain } from 'lucide-react';
 
 import AudioUploader from '@/components/AudioUploader';
 import FlashcardGenerator from '@/components/FlashcardGenerator';
@@ -70,6 +70,13 @@ const Index = () => {
   };
 
   const features = [
+    {
+      id: 'document-analyzer',
+      title: 'محلل ومُلخص المستندات الذكي',
+      icon: Brain,
+      description: 'تحليل شامل للمستندات مع ملخصات ذكية وخرائط ذهنية',
+      component: <DocumentAnalyzer />
+    },
     {
       id: 'upload',
       title: 'رفع ومعالجة الصوت',
