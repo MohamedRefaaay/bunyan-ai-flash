@@ -19,10 +19,12 @@ import {
   TrendingUp,
   AlertCircle,
   CheckCircle,
+  Settings
 } from "lucide-react";
 import { toast } from "sonner";
 import { SummaryData, DocumentSummarizerProps } from "./types";
 import { generateComprehensivePrompt, generateDownloadContent } from "./utils";
+import { makeAIRequest, getAIProviderConfig } from "@/utils/aiProviders";
 import SummaryTab from "./tabs/SummaryTab";
 import KeyPointsTab from "./tabs/KeyPointsTab";
 import MindMapTab from "./tabs/MindMapTab";
@@ -42,47 +44,35 @@ const DocumentSummarizer = ({ documentContent, fileName }: DocumentSummarizerPro
       return;
     }
 
-    const geminiApiKey = localStorage.getItem("gemini_api_key");
-    if (!geminiApiKey) {
-      toast.error("الرجاء إدخال مفتاح Gemini API الخاص بك في علامة تبويب الإعدادات أولاً.");
+    const config = getAIProviderConfig();
+    if (!config) {
+      toast.error("الرجاء إدخال مفتاح API في الإعدادات أولاً.", {
+        action: {
+          label: "إعدادات",
+          onClick: () => window.location.href = "/settings"
+        }
+      });
       return;
     }
 
     setIsAnalyzing(true);
     setSummaryData(null);
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
     const comprehensivePrompt = generateComprehensivePrompt(documentContent);
 
     try {
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: comprehensivePrompt }] }],
-        })
+      const analysisText = await makeAIRequest(comprehensivePrompt, {
+        systemPrompt: `أنت محلل مستندات ذكي متخصص في إنشاء تحليلات شاملة ومفصلة. يجب أن تكون إجابتك بصيغة JSON صحيحة فقط، بدون أي نص إضافي.`
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || "Failed to generate analysis.");
-      }
-
-      const result = await response.json();
-      if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
-        const analysisText = result.candidates[0].content.parts[0].text;
+      
+      try {
+        const cleanJson = analysisText.replace(/```json|```/g, '').trim();
+        const analysisData = JSON.parse(cleanJson);
         
-        try {
-          const cleanJson = analysisText.replace(/```json|```/g, '').trim();
-          const analysisData = JSON.parse(cleanJson);
-          
-          setSummaryData(analysisData);
-          toast.success("تم إنشاء التحليل الشامل المتقدم بنجاح!");
-        } catch {
-          toast.error("خطأ في تحليل استجابة Gemini API");
-        }
-      } else {
-        throw new Error("Invalid response structure from Gemini API.");
+        setSummaryData(analysisData);
+        toast.success("تم إنشاء التحليل الشامل المتقدم بنجاح!");
+      } catch {
+        toast.error("خطأ في تحليل استجابة الذكاء الاصطناعي");
       }
     } catch (error) {
       console.error("Error generating analysis:", error);
@@ -110,6 +100,8 @@ const DocumentSummarizer = ({ documentContent, fileName }: DocumentSummarizerPro
     toast.success("تم بدء تنزيل التحليل الشامل!");
   };
 
+  const config = getAIProviderConfig();
+
   return (
     <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
       <CardHeader>
@@ -119,22 +111,30 @@ const DocumentSummarizer = ({ documentContent, fileName }: DocumentSummarizerPro
             <span className="text-xl">التحليل الذكي الشامل المتقدم</span>
             <Badge variant="secondary" className="bg-purple-100 text-purple-800">
               <Sparkles className="h-3 w-3 mr-1" />
-              مدعوم بـ Gemini AI
+              {config ? `مدعوم بـ ${config.provider.toUpperCase()}` : 'غير متصل'}
             </Badge>
           </div>
-          {summaryData && !isAnalyzing && (
-             <Button variant="outline" size="sm" onClick={handleDownloadSummary} className="gap-2">
-                <Download className="h-4 w-4" />
-                تنزيل التحليل الشامل
-             </Button>
-          )}
+          <div className="flex gap-2">
+            {!config && (
+              <Button variant="outline" size="sm" onClick={() => window.location.href = "/settings"} className="gap-2">
+                <Settings className="h-4 w-4" />
+                إعدادات API
+              </Button>
+            )}
+            {summaryData && !isAnalyzing && (
+               <Button variant="outline" size="sm" onClick={handleDownloadSummary} className="gap-2">
+                  <Download className="h-4 w-4" />
+                  تنزيل التحليل الشامل
+               </Button>
+            )}
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex justify-center">
           <Button 
             onClick={generateComprehensiveSummary} 
-            disabled={isAnalyzing || !documentContent} 
+            disabled={isAnalyzing || !documentContent || !config} 
             className="gap-2 bg-purple-600 hover:bg-purple-700"
             size="lg"
           >
@@ -152,6 +152,21 @@ const DocumentSummarizer = ({ documentContent, fileName }: DocumentSummarizerPro
           </Button>
         </div>
 
+        {!config && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-yellow-600" />
+              <div>
+                <h4 className="font-medium text-yellow-900">مطلوب إعداد مزود الذكاء الاصطناعي</h4>
+                <p className="text-sm text-yellow-800 mt-1">
+                  يرجى الذهاب إلى الإعدادات وإدخال مفتاح API لأحد مزودي الذكاء الاصطناعي
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* باقي المحتوى كما هو */}
         {(summaryData || isAnalyzing) && (
           <Tabs defaultValue="summary" className="w-full">
             <TabsList className="grid grid-cols-4 md:grid-cols-8 w-full text-xs">

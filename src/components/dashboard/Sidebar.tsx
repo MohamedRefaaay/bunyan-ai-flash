@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { 
@@ -18,6 +19,7 @@ import {
   Youtube
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 interface SidebarProps {
   activeFeature?: string | null;
@@ -25,6 +27,8 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ activeFeature, onFeatureChange }: SidebarProps) => {
+  const navigate = useNavigate();
+
   const menuItems = [
     { id: null, icon: Home, label: 'لوحة التحكم', active: !activeFeature },
     { id: 'document-analyzer', icon: Brain, label: 'محلل المستندات' },
@@ -48,6 +52,10 @@ const Sidebar = ({ activeFeature, onFeatureChange }: SidebarProps) => {
     }
   };
 
+  const handleSettingsClick = () => {
+    navigate('/settings');
+  };
+
   return (
     <Card className="h-fit bg-white border-0 shadow-sm">
       <div className="p-6">
@@ -58,6 +66,7 @@ const Sidebar = ({ activeFeature, onFeatureChange }: SidebarProps) => {
           </div>
           <div>
             <h3 className="font-semibold text-gray-900">بنيان الذكي</h3>
+            <p className="text-xs text-gray-500">منصة التعلم الذكي</p>
           </div>
         </div>
 
@@ -78,6 +87,18 @@ const Sidebar = ({ activeFeature, onFeatureChange }: SidebarProps) => {
               {item.label}
             </Button>
           ))}
+          
+          {/* Settings Button */}
+          <div className="pt-4 border-t border-gray-100">
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-3 text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+              onClick={handleSettingsClick}
+            >
+              <Settings className="h-5 w-5" />
+              إعدادات التطبيق
+            </Button>
+          </div>
         </nav>
       </div>
     </Card>
