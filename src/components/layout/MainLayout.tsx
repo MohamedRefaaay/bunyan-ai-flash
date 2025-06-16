@@ -3,14 +3,17 @@ import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import AuthPage from '@/components/auth/AuthPage';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
-import Header from '@/components/navigation/Header';
+import ResponsiveLayout from '@/components/layout/ResponsiveLayout';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface MainLayoutProps {
   children: React.ReactNode;
+  activeFeature?: string | null;
+  onFeatureChange?: (feature: string | null) => void;
+  showSidebar?: boolean;
 }
 
-const MainLayout = ({ children }: MainLayoutProps) => {
+const MainLayout = ({ children, activeFeature, onFeatureChange, showSidebar }: MainLayoutProps) => {
   const { user, loading } = useAuth();
   const { isRTL } = useLanguage();
 
@@ -23,9 +26,14 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   }
 
   return (
-    <div className={`min-h-screen bg-muted/30 ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
-      <Header />
-      <main>{children}</main>
+    <div className={`${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+      <ResponsiveLayout
+        activeFeature={activeFeature}
+        onFeatureChange={onFeatureChange}
+        showSidebar={showSidebar}
+      >
+        {children}
+      </ResponsiveLayout>
     </div>
   );
 };
