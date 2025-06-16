@@ -3,8 +3,9 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Image, BarChart3, Network, Table } from 'lucide-react';
+import { Image, BarChart3, Network, Table, Search } from 'lucide-react';
 import { toast } from 'sonner';
+import { searchPexelsImages, makeAIRequest } from '@/utils/aiProviders';
 
 interface VisualFlashcardGeneratorProps {
   transcript: string;
@@ -18,53 +19,64 @@ const VisualFlashcardGenerator = ({ transcript, onVisualCardsGenerated }: Visual
 
   const generateVisualCards = async () => {
     if (!transcript) {
-      toast.error("Please upload and transcribe content first");
+      toast.error("يرجى رفع ومعالجة المحتوى أولاً");
       return;
     }
 
     setIsGenerating(true);
     
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    const mockVisualCards = [
-      {
-        id: 'visual-1',
-        front: 'Machine Learning Process Flow',
-        back: 'Input Data → Processing → Model Training → Prediction/Output',
-        type: 'basic',
-        difficulty: 'medium',
-        visual: true,
-        svgContent: '<svg viewBox="0 0 400 200" class="w-full h-32"><rect x="10" y="80" width="80" height="40" fill="#e3f2fd" stroke="#1976d2" rx="5"/><text x="50" y="105" text-anchor="middle" class="text-sm">Input</text><path d="M90 100 L130 100" stroke="#1976d2" stroke-width="2" marker-end="url(#arrowhead)"/><rect x="130" y="80" width="80" height="40" fill="#f3e5f5" stroke="#7b1fa2" rx="5"/><text x="170" y="105" text-anchor="middle" class="text-sm">Process</text><path d="M210 100 L250 100" stroke="#7b1fa2" stroke-width="2"/><rect x="250" y="80" width="80" height="40" fill="#e8f5e8" stroke="#388e3c" rx="5"/><text x="290" y="105" text-anchor="middle" class="text-sm">Output</text></svg>'
-      },
-      {
-        id: 'visual-2',
-        front: 'Learning Types Comparison',
-        back: 'Supervised: Labeled data | Unsupervised: Pattern finding | Reinforcement: Trial & error',
-        type: 'basic',
-        difficulty: 'medium',
-        visual: true,
-        svgContent: '<svg viewBox="0 0 400 200" class="w-full h-32"><circle cx="100" cy="100" r="50" fill="#ffeb3b" stroke="#f57c00" stroke-width="2"/><text x="100" y="105" text-anchor="middle" class="text-xs">Supervised</text><circle cx="200" cy="100" r="50" fill="#e8f5e8" stroke="#4caf50" stroke-width="2"/><text x="200" y="105" text-anchor="middle" class="text-xs">Unsupervised</text><circle cx="300" cy="100" r="50" fill="#f3e5f5" stroke="#9c27b0" stroke-width="2"/><text x="300" y="105" text-anchor="middle" class="text-xs">Reinforcement</text></svg>'
-      },
-      {
-        id: 'visual-3',
-        front: 'Algorithm Classification Table',
-        back: 'Linear Regression: Supervised | K-means: Unsupervised | Q-learning: Reinforcement',
-        type: 'basic',
-        difficulty: 'hard',
-        visual: true,
-        tableData: [
-          ['Algorithm', 'Type', 'Use Case'],
-          ['Linear Regression', 'Supervised', 'Prediction'],
-          ['K-means', 'Unsupervised', 'Clustering'],
-          ['Q-learning', 'Reinforcement', 'Game AI']
-        ]
-      }
-    ];
-    
-    setGeneratedCards(mockVisualCards);
-    onVisualCardsGenerated(mockVisualCards);
-    setIsGenerating(false);
-    toast.success(`Generated ${mockVisualCards.length} visual flashcards!`);
+    try {
+      // توليد البطاقات باستخدام Gemini
+      const prompt = `قم بتحليل النص التالي وإنشاء 5 بطاقات تعليمية مرئية من نوع ${visualType}:
+
+النص: ${transcript}
+
+يرجى إرجاع البيانات بصيغة JSON مع الهيكل التالي:
+{
+  "cards": [
+    {
+      "id": "visual-1",
+      "front": "عنوان البطاقة",
+      "back": "محتوى البطاقة",
+      "type": "basic",
+      "difficulty": "medium",
+      "visual": true,
+      "searchKeyword": "كلمة مفتاحية للبحث عن صورة مناسبة"
+    }
+  ]
+}`;
+
+      const systemPrompt = 'أنت خبير في إنشاء البطاقات التعليمية المرئية. أرجع استجابة JSON صالحة فقط.';
+      
+      const response = await makeAIRequest(prompt, { systemPrompt });
+      const data = JSON.parse(response);
+      
+      // البحث عن صور من Pexels لكل بطاقة
+      const cardsWithImages = await Promise.all(
+        data.cards.map(async (card: any) => {
+          try {
+            const images = await searchPexelsImages(card.searchKeyword || card.front, 1);
+            return {
+              ...card,
+              imageUrl: images && images.length > 0 ? images[0].src.medium : null
+            };
+          } catch (error) {
+            console.log('لا يمكن البحث عن صور، سيتم استخدام البطاقة بدون صورة');
+            return card;
+          }
+        })
+      );
+      
+      setGeneratedCards(cardsWithImages);
+      onVisualCardsGenerated(cardsWithImages);
+      toast.success(`تم إنشاء ${cardsWithImages.length} بطاقة مرئية بنجاح!`);
+      
+    } catch (error) {
+      console.error('خطأ في توليد البطاقات المرئية:', error);
+      toast.error('حدث خطأ في توليد البطاقات المرئية');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -72,9 +84,9 @@ const VisualFlashcardGenerator = ({ transcript, onVisualCardsGenerated }: Visual
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Image className="h-5 w-5" />
-          Visual Flashcard Generator
+          مولد البطاقات المرئية - مدعوم بـ Gemini و Pexels
           {generatedCards.length > 0 && (
-            <Badge variant="secondary">{generatedCards.length} cards</Badge>
+            <Badge variant="secondary">{generatedCards.length} بطاقة</Badge>
           )}
         </CardTitle>
       </CardHeader>
@@ -87,7 +99,7 @@ const VisualFlashcardGenerator = ({ transcript, onVisualCardsGenerated }: Visual
             size="sm"
           >
             <BarChart3 className="h-4 w-4" />
-            Diagrams
+            مخططات
           </Button>
           <Button
             variant={visualType === 'table' ? 'default' : 'outline'}
@@ -96,7 +108,7 @@ const VisualFlashcardGenerator = ({ transcript, onVisualCardsGenerated }: Visual
             size="sm"
           >
             <Table className="h-4 w-4" />
-            Tables
+            جداول
           </Button>
           <Button
             variant={visualType === 'mindmap' ? 'default' : 'outline'}
@@ -105,7 +117,7 @@ const VisualFlashcardGenerator = ({ transcript, onVisualCardsGenerated }: Visual
             size="sm"
           >
             <Network className="h-4 w-4" />
-            Mind Maps
+            خرائط ذهنية
           </Button>
           <Button
             variant={visualType === 'concept' ? 'default' : 'outline'}
@@ -114,7 +126,7 @@ const VisualFlashcardGenerator = ({ transcript, onVisualCardsGenerated }: Visual
             size="sm"
           >
             <Image className="h-4 w-4" />
-            Concepts
+            مفاهيم
           </Button>
         </div>
         
@@ -123,22 +135,39 @@ const VisualFlashcardGenerator = ({ transcript, onVisualCardsGenerated }: Visual
           disabled={isGenerating || !transcript}
           className="w-full"
         >
-          {isGenerating ? 'Generating Visual Cards...' : 'Generate Visual Cards'}
+          {isGenerating ? 'جاري إنشاء البطاقات المرئية...' : 'إنشاء البطاقات المرئية'}
         </Button>
 
         {generatedCards.length > 0 && (
           <div className="mt-4 p-4 bg-white rounded-lg border">
-            <h4 className="font-medium mb-3">Generated Visual Cards Preview</h4>
-            <div className="space-y-2">
+            <h4 className="font-medium mb-3">معاينة البطاقات المرئية المولدة</h4>
+            <div className="space-y-3">
               {generatedCards.map((card, index) => (
-                <div key={card.id} className="flex items-center gap-2 text-sm">
+                <div key={card.id} className="flex items-center gap-3 text-sm border rounded-lg p-3">
                   <Badge variant="outline">{index + 1}</Badge>
-                  <span>{card.front}</span>
+                  {card.imageUrl && (
+                    <img 
+                      src={card.imageUrl} 
+                      alt={card.front}
+                      className="w-12 h-12 object-cover rounded"
+                    />
+                  )}
+                  <div className="flex-1">
+                    <p className="font-medium">{card.front}</p>
+                    <p className="text-muted-foreground text-xs">{card.back}</p>
+                  </div>
+                  <Badge variant="secondary">{card.difficulty}</Badge>
                 </div>
               ))}
             </div>
           </div>
         )}
+
+        <div className="text-xs text-muted-foreground">
+          <p>• يستخدم Google Gemini لتوليد البطاقات التعليمية</p>
+          <p>• يستخدم Pexels للبحث عن الصور المناسبة</p>
+          <p>• يدعم أنواع مختلفة من البطاقات المرئية</p>
+        </div>
       </CardContent>
     </Card>
   );

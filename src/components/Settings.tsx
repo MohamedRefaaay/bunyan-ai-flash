@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Bot, Globe, Palette } from "lucide-react";
+import { Bot, Globe, Palette, Image } from "lucide-react";
 import AIProviderSettings from "./settings/AIProviderSettings";
+import PexelsSettings from "./settings/PexelsSettings";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const Settings = () => {
@@ -20,17 +21,21 @@ const Settings = () => {
         </h1>
         <p className="text-gray-600">
           {isRTL 
-            ? "تخصيص التطبيق وإدارة Gemini AI"
-            : "Customize the app and manage Gemini AI"
+            ? "تخصيص التطبيق وإدارة أدوات الذكاء الاصطناعي"
+            : "Customize the app and manage AI tools"
           }
         </p>
       </div>
 
       <Tabs defaultValue="ai-provider" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="ai-provider" className="flex items-center gap-2">
             <Bot className="h-4 w-4" />
             {isRTL ? "Gemini AI" : "Gemini AI"}
+          </TabsTrigger>
+          <TabsTrigger value="pexels" className="flex items-center gap-2">
+            <Image className="h-4 w-4" />
+            {isRTL ? "Pexels" : "Pexels"}
           </TabsTrigger>
           <TabsTrigger value="language" className="flex items-center gap-2">
             <Globe className="h-4 w-4" />
@@ -44,6 +49,10 @@ const Settings = () => {
 
         <TabsContent value="ai-provider" className="mt-6">
           <AIProviderSettings isRTL={isRTL} />
+        </TabsContent>
+
+        <TabsContent value="pexels" className="mt-6">
+          <PexelsSettings isRTL={isRTL} />
         </TabsContent>
 
         <TabsContent value="language" className="mt-6">
@@ -100,6 +109,12 @@ const Settings = () => {
                       {isRTL 
                         ? "• تحليل وتلخيص المستندات باللغتين"
                         : "• Document analysis and summarization in both languages"
+                      }
+                    </li>
+                    <li>
+                      {isRTL 
+                        ? "• البحث عن الصور عبر Pexels"
+                        : "• Image search via Pexels"
                       }
                     </li>
                   </ul>

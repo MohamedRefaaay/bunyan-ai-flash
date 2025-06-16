@@ -7,6 +7,11 @@ export interface AIProviderConfig {
   provider: AIProvider;
 }
 
+export interface PexelsConfig {
+  apiKey: string;
+  enabled: boolean;
+}
+
 export const getAIProviderConfig = (provider?: AIProvider): AIProviderConfig | null => {
   const apiKey = localStorage.getItem('gemini_api_key');
   
@@ -23,6 +28,20 @@ export const getAIProviderConfig = (provider?: AIProvider): AIProviderConfig | n
     apiKey,
     model: models.gemini || defaultModel,
     provider: 'gemini'
+  };
+};
+
+export const getPexelsConfig = (): PexelsConfig | null => {
+  const apiKey = localStorage.getItem('pexels_api_key');
+  const enabled = localStorage.getItem('pexels_enabled') === 'true';
+  
+  if (!apiKey) {
+    return null;
+  }
+
+  return {
+    apiKey,
+    enabled
   };
 };
 
@@ -46,6 +65,32 @@ export const makeAIRequest = async (prompt: string, options?: {
     return await makeGeminiRequest(apiKey, model, prompt, systemPrompt);
   } catch (error) {
     console.error('Error with Gemini:', error);
+    throw error;
+  }
+};
+
+export const searchPexelsImages = async (query: string, perPage: number = 20) => {
+  const config = getPexelsConfig();
+  
+  if (!config || !config.enabled) {
+    throw new Error('لم يتم تفعيل Pexels أو لم يتم العثور على مفتاح API. يرجى إعداده في الإعدادات.');
+  }
+
+  try {
+    const response = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=${perPage}`, {
+      headers: {
+        'Authorization': config.apiKey
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('فشل في البحث عن الصور من Pexels');
+    }
+
+    const data = await response.json();
+    return data.photos;
+  } catch (error) {
+    console.error('Error searching Pexels:', error);
     throw error;
   }
 };
@@ -124,6 +169,20 @@ export const validateAPIKey = async (apiKey: string): Promise<boolean> => {
     return true;
   } catch (error) {
     console.error('API validation failed for Gemini:', error);
+    return false;
+  }
+};
+
+export const validatePexelsKey = async (apiKey: string): Promise<boolean> => {
+  try {
+    const response = await fetch('https://api.pexels.com/v1/search?query=test&per_page=1', {
+      headers: {
+        'Authorization': apiKey
+      }
+    });
+    return response.ok;
+  } catch (error) {
+    console.error('API validation failed for Pexels:', error);
     return false;
   }
 };
