@@ -51,7 +51,7 @@ const ResponsiveLayout = ({
   };
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-muted/30 w-full">
       {/* Header */}
       <Header 
         onMenuToggle={showSidebar ? toggleSidebar : undefined}
@@ -59,7 +59,7 @@ const ResponsiveLayout = ({
       />
 
       {/* Main Layout */}
-      <div className="flex">
+      <div className="flex w-full">
         {/* Sidebar */}
         {showSidebar && (
           <Sidebar
@@ -73,11 +73,11 @@ const ResponsiveLayout = ({
 
         {/* Main Content */}
         <main className={cn(
-          "flex-1 min-h-[calc(100vh-4rem)]",
-          showSidebar && !isMobile && !desktopSidebarCollapsed && "lg:ml-0",
-          showSidebar && !isMobile && desktopSidebarCollapsed && "lg:ml-0"
+          "flex-1 min-h-[calc(100vh-4rem)] w-full overflow-x-hidden",
+          !isMobile && showSidebar && !desktopSidebarCollapsed && "lg:pr-64",
+          !isMobile && showSidebar && desktopSidebarCollapsed && "lg:pr-16"
         )}>
-          <div className="p-4 lg:p-6 max-w-full">
+          <div className="p-3 sm:p-4 lg:p-6 w-full max-w-full">
             {children}
           </div>
         </main>

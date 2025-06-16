@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardStats from '@/components/dashboard/DashboardStats';
 import ActionCards from '@/components/dashboard/ActionCards';
-import Sidebar from '@/components/dashboard/Sidebar';
 import { Separator } from '@/components/ui/separator';
 import AudioUploader from '@/components/AudioUploader';
 import FlashcardGenerator from '@/components/FlashcardGenerator';
@@ -272,29 +271,23 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/50">
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex gap-6">
-          {/* Sidebar */}
-          <div className="w-64 shrink-0">
-            <Sidebar activeFeature={activeFeature} onFeatureChange={handleFeatureChange} />
-          </div>
-
-          {/* Main Content */}
-          <div className="flex-1">
-            <DashboardHeader />
-            <DashboardStats flashcards={flashcards} />
-            
-            {/* Feature Content Area */}
-            {activeFeature ? (
-              <div className="mb-8">
-                <Separator className="mb-6" />
+    <div className="min-h-screen bg-gray-50/50 w-full">
+      <div className="w-full px-3 sm:px-4 lg:px-6 py-4 lg:py-6">
+        <div className="w-full max-w-full">
+          <DashboardHeader />
+          <DashboardStats flashcards={flashcards} />
+          
+          {/* Feature Content Area */}
+          {activeFeature ? (
+            <div className="mb-6 lg:mb-8">
+              <Separator className="mb-4 lg:mb-6" />
+              <div className="w-full max-w-full overflow-hidden">
                 {renderFeatureComponent()}
               </div>
-            ) : (
-              <ActionCards onFeatureSelect={handleFeatureChange} />
-            )}
-          </div>
+            </div>
+          ) : (
+            <ActionCards onFeatureSelect={handleFeatureChange} />
+          )}
         </div>
       </div>
     </div>
