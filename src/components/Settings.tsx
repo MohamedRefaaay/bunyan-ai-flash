@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { KeyRound, Bot, Globe, Palette } from "lucide-react";
+import { Bot, Globe, Palette } from "lucide-react";
 import AIProviderSettings from "./settings/AIProviderSettings";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -20,17 +20,17 @@ const Settings = () => {
         </h1>
         <p className="text-gray-600">
           {isRTL 
-            ? "تخصيص التطبيق وإدارة مفاتيح API ومزودي الذكاء الاصطناعي"
-            : "Customize the app and manage API keys and AI providers"
+            ? "تخصيص التطبيق وإدارة Gemini AI"
+            : "Customize the app and manage Gemini AI"
           }
         </p>
       </div>
 
-      <Tabs defaultValue="ai-providers" className="w-full">
+      <Tabs defaultValue="ai-provider" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="ai-providers" className="flex items-center gap-2">
+          <TabsTrigger value="ai-provider" className="flex items-center gap-2">
             <Bot className="h-4 w-4" />
-            {isRTL ? "مزودو الذكاء الاصطناعي" : "AI Providers"}
+            {isRTL ? "Gemini AI" : "Gemini AI"}
           </TabsTrigger>
           <TabsTrigger value="language" className="flex items-center gap-2">
             <Globe className="h-4 w-4" />
@@ -42,7 +42,7 @@ const Settings = () => {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="ai-providers" className="mt-6">
+        <TabsContent value="ai-provider" className="mt-6">
           <AIProviderSettings isRTL={isRTL} />
         </TabsContent>
 
@@ -92,8 +92,8 @@ const Settings = () => {
                     </li>
                     <li>
                       {isRTL 
-                        ? "• دعم كامل للغة العربية في الذكاء الاصطناعي"
-                        : "• Full Arabic language support in AI"
+                        ? "• دعم كامل للغة العربية في Gemini AI"
+                        : "• Full Arabic language support in Gemini AI"
                       }
                     </li>
                     <li>

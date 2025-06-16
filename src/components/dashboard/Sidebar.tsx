@@ -5,7 +5,6 @@ import {
   Home, 
   Upload, 
   BookOpen, 
-  Clock, 
   Settings,
   User,
   Brain,
@@ -18,7 +17,8 @@ import {
   Palette,
   Youtube,
   X,
-  Menu
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -83,19 +83,19 @@ const Sidebar = ({ activeFeature, onFeatureChange, isOpen = true, onToggle, isMo
         
         {/* Mobile Sidebar */}
         <div className={cn(
-          "fixed top-0 right-0 h-full w-72 bg-white z-50 transform transition-transform duration-300 ease-in-out lg:hidden",
+          "fixed top-0 right-0 h-full w-80 bg-white z-50 transform transition-transform duration-300 ease-in-out lg:hidden",
           "shadow-2xl border-l border-gray-200 overflow-y-auto",
           isOpen ? "translate-x-0" : "translate-x-full"
         )}>
           {/* Mobile Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-100 sticky top-0 bg-white z-10">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <User className="h-4 w-4 text-blue-600" />
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                <Bot className="h-5 w-5 text-white" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900 text-sm">بنيان الذكي</h3>
-                <p className="text-xs text-gray-500">منصة التعلم الذكي</p>
+                <h3 className="font-bold text-gray-900 text-lg">بنيان الذكي</h3>
+                <p className="text-xs text-gray-500">مدعوم بـ Google Gemini</p>
               </div>
             </div>
             <Button
@@ -104,13 +104,13 @@ const Sidebar = ({ activeFeature, onFeatureChange, isOpen = true, onToggle, isMo
               onClick={onToggle}
               className="h-8 w-8 p-0"
             >
-              <X className="h-4 w-4" />
+              <X className="h-5 w-5" />
             </Button>
           </div>
 
           {/* Mobile Menu */}
           <div className="p-4 pb-20">
-            <nav className="space-y-1">
+            <nav className="space-y-2">
               {menuItems.map((item, index) => (
                 <Button
                   key={index}
@@ -124,7 +124,7 @@ const Sidebar = ({ activeFeature, onFeatureChange, isOpen = true, onToggle, isMo
                   onClick={() => handleItemClick(item.id)}
                 >
                   <item.icon className="h-5 w-5 flex-shrink-0" />
-                  <span className="text-sm truncate">{item.label}</span>
+                  <span className="text-sm font-medium truncate">{item.label}</span>
                 </Button>
               ))}
               
@@ -136,7 +136,7 @@ const Sidebar = ({ activeFeature, onFeatureChange, isOpen = true, onToggle, isMo
                   onClick={handleSettingsClick}
                 >
                   <Settings className="h-5 w-5 flex-shrink-0" />
-                  <span className="text-sm">إعدادات التطبيق</span>
+                  <span className="text-sm font-medium">إعدادات Gemini</span>
                 </Button>
               </div>
             </nav>
@@ -149,24 +149,33 @@ const Sidebar = ({ activeFeature, onFeatureChange, isOpen = true, onToggle, isMo
   // Desktop Sidebar
   return (
     <div className={cn(
-      "fixed right-0 top-16 h-[calc(100vh-4rem)] transition-all duration-300 z-30",
-      isOpen ? "w-64" : "w-16"
+      "fixed right-0 top-16 h-[calc(100vh-4rem)] transition-all duration-300 z-30 border-l border-gray-200",
+      isOpen ? "w-72" : "w-16"
     )}>
-      <Card className="h-full bg-white border-0 shadow-sm overflow-y-auto">
+      <Card className="h-full bg-white/95 backdrop-blur-sm border-0 shadow-lg overflow-y-auto">
         <div className="p-4">
-          {/* Profile Section */}
-          <div className={cn(
-            "flex items-center gap-3 mb-6 pb-4 border-b border-gray-100",
-            !isOpen && "justify-center"
-          )}>
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <User className="h-4 w-4 text-blue-600" />
-            </div>
+          {/* Toggle Button */}
+          <div className="flex justify-between items-center mb-4">
             {isOpen && (
-              <div className="min-w-0">
-                <h3 className="font-semibold text-gray-900 text-sm truncate">بنيان الذكي</h3>
-                <p className="text-xs text-gray-500 truncate">منصة التعلم الذكي</p>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                  <Bot className="h-4 w-4 text-white" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-gray-900 text-sm truncate">بنيان الذكي</h3>
+                  <p className="text-xs text-gray-500 truncate">Google Gemini AI</p>
+                </div>
               </div>
+            )}
+            {onToggle && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onToggle}
+                className="h-8 w-8 p-0 hidden lg:flex"
+              >
+                {isOpen ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+              </Button>
             )}
           </div>
 
@@ -177,17 +186,17 @@ const Sidebar = ({ activeFeature, onFeatureChange, isOpen = true, onToggle, isMo
                 key={index}
                 variant={item.active || activeFeature === item.id ? "default" : "ghost"}
                 className={cn(
-                  "w-full gap-3 h-10",
+                  "w-full gap-3 h-11",
                   item.active || activeFeature === item.id
-                    ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50',
+                    ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md' 
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/70',
                   isOpen ? "justify-start" : "justify-center px-2"
                 )}
                 onClick={() => handleItemClick(item.id)}
                 title={!isOpen ? item.label : undefined}
               >
-                <item.icon className="h-4 w-4 flex-shrink-0" />
-                {isOpen && <span className="text-sm truncate">{item.label}</span>}
+                <item.icon className="h-5 w-5 flex-shrink-0" />
+                {isOpen && <span className="text-sm font-medium truncate">{item.label}</span>}
               </Button>
             ))}
             
@@ -196,14 +205,14 @@ const Sidebar = ({ activeFeature, onFeatureChange, isOpen = true, onToggle, isMo
               <Button
                 variant="ghost"
                 className={cn(
-                  "w-full gap-3 h-10 text-gray-600 hover:text-gray-900 hover:bg-gray-50",
+                  "w-full gap-3 h-11 text-gray-600 hover:text-gray-900 hover:bg-gray-100/70",
                   isOpen ? "justify-start" : "justify-center px-2"
                 )}
                 onClick={handleSettingsClick}
-                title={!isOpen ? "إعدادات التطبيق" : undefined}
+                title={!isOpen ? "إعدادات Gemini" : undefined}
               >
-                <Settings className="h-4 w-4 flex-shrink-0" />
-                {isOpen && <span className="text-sm">إعدادات التطبيق</span>}
+                <Settings className="h-5 w-5 flex-shrink-0" />
+                {isOpen && <span className="text-sm font-medium">إعدادات Gemini</span>}
               </Button>
             </div>
           </nav>

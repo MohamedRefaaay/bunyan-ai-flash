@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -42,9 +43,9 @@ const AudioUploader = ({ onFileUpload, onTranscriptGenerated }: AudioUploaderPro
     try {
       const config = getAIProviderConfig();
 
-      if (!config || config.provider !== 'gemini' || !localStorage.getItem('gemini_api_key')) {
-        toast.error("لتحويل الصوت، يرجى اختيار وتكوين Gemini في الإعدادات.", {
-          description: "هذه الميزة تستخدم Gemini للحصول على أفضل دقة.",
+      if (!config || !localStorage.getItem('gemini_api_key')) {
+        toast.error("لتحويل الصوت، يرجى إدخال مفتاح Gemini في الإعدادات.", {
+          description: "هذه الميزة تستخدم Google Gemini للحصول على أفضل دقة.",
           action: {
             label: "إلى الإعدادات",
             onClick: () => window.location.href = "/settings"
@@ -66,7 +67,7 @@ const AudioUploader = ({ onFileUpload, onTranscriptGenerated }: AudioUploaderPro
       if (!data.text) throw new Error("لم يتمكن Gemini من تحويل الصوت.");
       
       const transcriptText = data.text;
-      toast.success("تم تحويل الصوت إلى نص بنجاح باستخدام Gemini!");
+      toast.success("تم تحويل الصوت إلى نص بنجاح باستخدام Google Gemini!");
 
       onTranscriptGenerated(transcriptText);
 
@@ -118,14 +119,14 @@ const AudioUploader = ({ onFileUpload, onTranscriptGenerated }: AudioUploaderPro
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-blue-900">
           <Upload className="h-5 w-5" />
-          رفع ومعالجة المحتوى
+          رفع ومعالجة المحتوى - مدعوم بـ Google Gemini
         </CardTitle>
       </CardHeader>
       <CardContent>
         <Alert className="mb-4 border-green-200 bg-green-50">
           <CheckCircle className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-green-800">
-            يدعم التطبيق الآن تحويل الصوت إلى نص باستخدام Google Gemini للحصول على أفضل النتائج.
+            يدعم التطبيق الآن تحويل الصوت إلى نص باستخدام Google Gemini للحصول على أفضل النتائج في اللغة العربية.
           </AlertDescription>
         </Alert>
 
@@ -133,7 +134,7 @@ const AudioUploader = ({ onFileUpload, onTranscriptGenerated }: AudioUploaderPro
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="audio" className="flex items-center gap-2">
               <FileAudio className="h-4 w-4" />
-              ملف صوتي (Gemini AI)
+              ملف صوتي (Google Gemini)
             </TabsTrigger>
             <TabsTrigger value="text" className="flex items-center gap-2">
               <Type className="h-4 w-4" />
@@ -178,6 +179,7 @@ const AudioUploader = ({ onFileUpload, onTranscriptGenerated }: AudioUploaderPro
           <p>• يستخدم التطبيق Google Gemini لتحويل الصوت إلى نص بدقة عالية</p>
           <p>• يدعم اللغة العربية والإنجليزية وعدة لغات أخرى</p>
           <p>• يدعم ملفات MP3, WAV, M4A, MP4, WEBM للملفات الصوتية</p>
+          <p>• احصل على مفتاح Gemini مجاناً من Google AI Studio</p>
         </div>
       </CardContent>
     </Card>

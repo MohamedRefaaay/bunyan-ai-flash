@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,7 +52,7 @@ const YouTubeSummarizer = ({ onFlashcardsGenerated, onYouTubeProcessed, sessionI
 
     const config = getAIProviderConfig();
     if (!config) {
-      toast.error("الرجاء إدخال مفتاح API في الإعدادات أولاً.", {
+      toast.error("الرجاء إدخال مفتاح Gemini في الإعدادات أولاً.", {
         action: {
           label: "إعدادات",
           onClick: () => window.location.href = "/settings"
@@ -91,7 +92,7 @@ const YouTubeSummarizer = ({ onFlashcardsGenerated, onYouTubeProcessed, sessionI
       };
       setVideoInfo(fetchedVideoInfo);
       
-      const summaryPrompt = `قم بتحليل وتلخيص محتوى هذا الفيديو التعليمي من يوتيوب:
+      const summaryPrompt = `قم بتحليل وتلخيص محتوى هذا الفيديو التعليمي من يوتيوب باستخدام Google Gemini:
 
 العنوان: ${fetchedVideoInfo.title}
 
@@ -110,7 +111,7 @@ ${transcript}
 }`;
 
       const analysisResult = await makeAIRequest(summaryPrompt, {
-        systemPrompt: 'أنت خبير في تحليل وتلخيص المحتوى التعليمي. أجب بصيغة JSON صحيحة فقط.'
+        systemPrompt: 'أنت خبير في تحليل وتلخيص المحتوى التعليمي باستخدام Google Gemini. أجب بصيغة JSON صحيحة فقط.'
       });
 
       let analysis;
@@ -118,9 +119,9 @@ ${transcript}
         const cleanJson = analysisResult.replace(/```json|```/g, '').trim();
         analysis = JSON.parse(cleanJson);
       } catch(e) {
-        console.error("Failed to parse JSON from summary AI:", analysisResult);
-        toast.error("فشل تحليل استجابة الذكاء الاصطناعي. قد تكون الاستجابة غير متوقعة.");
-        throw new Error("Invalid JSON response for summary.");
+        console.error("Failed to parse JSON from Gemini:", analysisResult);
+        toast.error("فشل تحليل استجابة Gemini. قد تكون الاستجابة غير متوقعة.");
+        throw new Error("Invalid JSON response from Gemini.");
       }
       
       setSummary(analysis.summary);
@@ -149,7 +150,7 @@ ${transcript}
 
     const config = getAIProviderConfig();
     if (!config) {
-      toast.error("الرجاء إدخال مفتاح API في الإعدادات أولاً.");
+      toast.error("الرجاء إدخال مفتاح Gemini في الإعدادات أولاً.");
       return;
     }
 
@@ -157,7 +158,7 @@ ${transcript}
 
     try {
       const basePromptInfo = `
-بناءً على تحليل هذا الفيديو التعليمي:
+بناءً على تحليل هذا الفيديو التعليمي من يوتيوب باستخدام Google Gemini:
 الملخص: ${summary}
 النقاط الرئيسية:
 ${keyPoints.map((point, index) => `${index + 1}. ${point}`).join('\n')}
@@ -170,7 +171,7 @@ ${keyPoints.map((point, index) => `${index + 1}. ${point}`).join('\n')}
     "back": "...",
     "difficulty": "medium",
     "category": "فيديو يوتيوب",
-    "tags": ["يوتيوب", "bunyan_ai"],
+    "tags": ["يوتيوب", "bunyan_ai", "gemini"],
     "source": "YouTube Video"
   }
 ]`;
@@ -183,7 +184,7 @@ ${keyPoints.map((point, index) => `${index + 1}. ${point}`).join('\n')}
     };
 
       const flashcardsResult = await makeAIRequest(prompts[flashcardFormat], {
-        systemPrompt: 'أنت خبير في إنشاء البطاقات التعليمية من المحتوى المرئي. أجب بصيغة JSON صحيحة فقط.'
+        systemPrompt: 'أنت خبير في إنشاء البطاقات التعليمية من المحتوى المرئي باستخدام Google Gemini. أجب بصيغة JSON صحيحة فقط.'
       });
 
       let flashcards: any[];
@@ -191,18 +192,18 @@ ${keyPoints.map((point, index) => `${index + 1}. ${point}`).join('\n')}
         const cleanJson = flashcardsResult.replace(/```json|```/g, '').trim();
         flashcards = JSON.parse(cleanJson);
       } catch (e) {
-        console.error("Failed to parse JSON from flashcards AI:", flashcardsResult);
-        toast.error("فشل تحليل استجابة الذكاء الاصطناعي للبطاقات.");
-        throw new Error("Invalid JSON response for flashcards.");
+        console.error("Failed to parse JSON from Gemini:", flashcardsResult);
+        toast.error("فشل تحليل استجابة Gemini للبطاقات.");
+        throw new Error("Invalid JSON response for flashcards from Gemini.");
       }
       
       if (Array.isArray(flashcards)) {
         const flashcardsWithSignature = flashcards.map(card => ({
             ...card,
-            back: card.back ? `${card.back}\n\n📘 Made with Bunyan_Anki_AI` : '📘 Made with Bunyan_Anki_AI'
+            back: card.back ? `${card.back}\n\n📘 Made with Bunyan_Anki_AI & Google Gemini` : '📘 Made with Bunyan_Anki_AI & Google Gemini'
         }));
         onFlashcardsGenerated(flashcardsWithSignature as Flashcard[]);
-        toast.success(`تم إنشاء ${flashcardsWithSignature.length} بطاقة تعليمية بنجاح!`);
+        toast.success(`تم إنشاء ${flashcardsWithSignature.length} بطاقة تعليمية بنجاح باستخدام Google Gemini!`);
       } else {
         throw new Error('تنسيق غير صحيح للبطاقات');
       }
@@ -223,8 +224,8 @@ ${keyPoints.map((point, index) => `${index + 1}. ${point}`).join('\n')}
           <Youtube className="h-6 w-6 text-red-600" />
           تلخيص وتحليل فيديوهات يوتيوب
           {config && (
-            <Badge variant="secondary" className="bg-red-100 text-red-800">
-              مدعوم بـ {config.provider.toUpperCase()}
+            <Badge variant="secondary" className="bg-green-100 text-green-800">
+              مدعوم بـ Google Gemini
             </Badge>
           )}
         </CardTitle>
@@ -235,9 +236,9 @@ ${keyPoints.map((point, index) => `${index + 1}. ${point}`).join('\n')}
             <div className="flex items-center gap-3">
               <AlertCircle className="h-5 w-5 text-yellow-600" />
               <div className="flex-1">
-                <h4 className="font-medium text-yellow-900">مطلوب إعداد مزود الذكاء الاصطناعي</h4>
+                <h4 className="font-medium text-yellow-900">مطلوب إعداد Google Gemini</h4>
                 <p className="text-sm text-yellow-800 mt-1">
-                  يرجى الذهاب إلى الإعدادات وإدخال مفتاح API لأحد مزودي الذكاء الاصطناعي
+                  يرجى الذهاب إلى الإعدادات وإدخال مفتاح Gemini API المجاني
                 </p>
               </div>
               <Button variant="outline" size="sm" onClick={() => window.location.href = "/settings"}>
@@ -294,9 +295,10 @@ ${keyPoints.map((point, index) => `${index + 1}. ${point}`).join('\n')}
         {/* معلومات إضافية */}
         <div className="text-xs text-gray-500 space-y-1">
           <p>• يدعم روابط يوتيوب بجميع الصيغ</p>
-          <p>• يحلل المحتوى ويستخرج النقاط المهمة</p>
+          <p>• يحلل المحتوى ويستخرج النقاط المهمة باستخدام Google Gemini</p>
           <p>• ينشئ بطاقات تعليمية تفاعلية</p>
           <p>• ملاحظة: هذه الميزة تتطلب أن يكون لدى الفيديو نص (caption) متاح.</p>
+          <p>• احصل على مفتاح Gemini مجاناً من Google AI Studio</p>
         </div>
       </CardContent>
     </Card>
