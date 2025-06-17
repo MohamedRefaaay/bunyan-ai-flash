@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardStats from '@/components/dashboard/DashboardStats';
@@ -177,6 +178,11 @@ const Dashboard = () => {
     }
   };
 
+  const handleSummaryGenerated = (summary: string, keyPoints: string[]) => {
+    console.log('Summary generated:', summary);
+    console.log('Key points:', keyPoints);
+  };
+
   const handleCardEdit = (card: Flashcard) => {
     setSelectedCard(card);
     setShowEditor(true);
@@ -231,7 +237,7 @@ const Dashboard = () => {
       case 'upload':
         return <AudioUploader onFileUpload={handleFileUpload} onTranscriptGenerated={handleTranscriptGenerated} />;
       case 'summary':
-        return <AISummary transcript={transcript} onFlashcardsGenerated={handleFlashcardsGenerated} />;
+        return <AISummary onSummaryGenerated={handleSummaryGenerated} onFlashcardsGenerated={handleFlashcardsGenerated} sessionId={sessionId} />;
       case 'generator':
         return <FlashcardGenerator 
           transcript={transcript} 
