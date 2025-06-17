@@ -16,3 +16,21 @@ export interface AIProviderConfig {
   icon: ReactNode;
   setupUrl: string;
 }
+
+export interface FlashcardGenerationRequest {
+  content: string;
+  title?: string;
+  sourceType: 'document' | 'youtube' | 'audio' | 'visual' | 'custom';
+  cardCount?: number;
+}
+
+export interface GeneratedFlashcard {
+  id: string;
+  front: string;
+  back: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  category: string;
+  tags: string[];
+  source: string;
+  signature?: string;
+}

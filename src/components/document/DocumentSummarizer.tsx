@@ -24,6 +24,8 @@ import { toast } from "sonner";
 import { SummaryData, DocumentSummarizerProps as OriginalDocSummarizerProps } from "./types";
 import { generateComprehensivePrompt, generateDownloadContent } from "./utils";
 import { makeAIRequest, getAIProviderConfig } from "@/utils/aiProviders";
+import FlashcardGeneratorButton from "@/components/flashcards/FlashcardGeneratorButton";
+import FlashcardPreviewModal from "@/components/flashcards/FlashcardPreviewModal";
 import SummaryTab from "./tabs/SummaryTab";
 import KeyPointsTab from "./tabs/KeyPointsTab";
 import MindMapTab from "./tabs/MindMapTab";
@@ -43,7 +45,8 @@ interface DocumentSummarizerProps extends OriginalDocSummarizerProps {
 const DocumentSummarizer = ({ documentContent, fileName, onFlashcardsGenerated, sessionId }: DocumentSummarizerProps) => {
   const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isGeneratingCards, setIsGeneratingCards] = useState(false);
+  const [previewFlashcards, setPreviewFlashcards] = useState<Flashcard[]>([]);
+  const [showPreview, setShowPreview] = useState(false);
 
   const generateComprehensiveSummary = async () => {
     if (!documentContent) {
@@ -98,58 +101,20 @@ const DocumentSummarizer = ({ documentContent, fileName, onFlashcardsGenerated, 
     }
   };
 
-  const generateFlashcardsFromDocument = async () => {
-    if (!summaryData || !sessionId) {
-      toast.error('يرجى تحليل المستند أولاً لإنشاء البطاقات');
-      return;
-    }
+  const handleFlashcardsGenerated = (flashcards: Flashcard[]) => {
+    setPreviewFlashcards(flashcards);
+    setShowPreview(true);
+  };
 
-    const config = getAIProviderConfig();
-    if (!config) {
-      toast.error("الرجاء إدخال مفتاح API في الإعدادات أولاً.");
-      return;
-    }
+  const handleExportFlashcards = () => {
+    onFlashcardsGenerated(previewFlashcards);
+    setShowPreview(false);
+    toast.success('تم تصدير البطاقات بنجاح!');
+  };
 
-    setIsGeneratingCards(true);
-
-    try {
-      const flashcardPrompt = `بناءً على تحليل هذا المستند، قم بإنشاء 12 بطاقة تعليمية:
-
-${generateDownloadContent(summaryData, fileName)}
-
-يجب أن تكون الإجابة بصيغة JSON فقط مع هذا التنسيق:
-[
-  {
-    "id": "1",
-    "front": "السؤال هنا", 
-    "back": "الإجابة هنا",
-    "difficulty": "medium",
-    "category": "مستند",
-    "tags": ["ملخص", "${fileName}"],
-    "source": "Document"
-  }
-]
-
-تأكد من تنويع أنواع الأسئلة وتغطية المحتوى بشكل شامل.`;
-
-      const flashcardsResult = await makeAIRequest(flashcardPrompt, {
-        systemPrompt: 'أنت خبير في إنشاء البطاقات التعليمية من المستندات. أجب بصيغة JSON صحيحة فقط.'
-      });
-
-      const cleanJson = flashcardsResult.replace(/```json|```/g, '').trim();
-      const flashcards: any[] = JSON.parse(cleanJson);
-      
-      if (Array.isArray(flashcards)) {
-        onFlashcardsGenerated(flashcards as Flashcard[]);
-      } else {
-        throw new Error('تنسيق غير صحيح للبطاقات');
-      }
-    } catch (error) {
-      console.error('Error generating flashcards from document:', error);
-      toast.error('حدث خطأ في إنشاء البطاقات');
-    } finally {
-      setIsGeneratingCards(false);
-    }
+  const handleEditCard = (card: Flashcard) => {
+    // Implementation for editing cards can be added here
+    console.log('Edit card:', card);
   };
 
   const handleDownloadSummary = () => {
@@ -171,6 +136,7 @@ ${generateDownloadContent(summaryData, fileName)}
   };
 
   const config = getAIProviderConfig();
+  const contentForCards = summaryData ? generateDownloadContent(summaryData, fileName) : documentContent;
 
   return (
     <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
@@ -236,28 +202,18 @@ ${generateDownloadContent(summaryData, fileName)}
           </div>
         )}
 
-        {summaryData && !isAnalyzing && (
-            <div className="flex justify-center mt-4">
-              <Button 
-                onClick={generateFlashcardsFromDocument}
-                disabled={isGeneratingCards || !sessionId}
-                className="gap-2 bg-green-600 hover:bg-green-700"
-                size="lg"
-              >
-                {isGeneratingCards ? (
-                  <>
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    جاري إنشاء البطاقات...
-                  </>
-                ) : (
-                  <>
-                    <BookOpen className="h-5 w-5" />
-                    إنشاء بطاقات تعليمية من المستند
-                  </>
-                )}
-              </Button>
-            </div>
-          )}
+        {(summaryData || documentContent) && !isAnalyzing && (
+          <div className="flex justify-center">
+            <FlashcardGeneratorButton
+              content={contentForCards}
+              title={fileName}
+              sourceType="document"
+              onFlashcardsGenerated={handleFlashcardsGenerated}
+              cardCount={10}
+              className="w-full max-w-md"
+            />
+          </div>
+        )}
 
         {(summaryData || isAnalyzing) && (
           <Tabs defaultValue="summary" className="w-full">
@@ -347,6 +303,14 @@ ${generateDownloadContent(summaryData, fileName)}
             </div>
           </div>
         )}
+
+        <FlashcardPreviewModal
+          isOpen={showPreview}
+          onClose={() => setShowPreview(false)}
+          flashcards={previewFlashcards}
+          onExport={handleExportFlashcards}
+          onEdit={handleEditCard}
+        />
       </CardContent>
     </Card>
   );

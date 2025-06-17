@@ -22,7 +22,7 @@ export const getAIProviderConfig = (provider?: AIProvider): AIProviderConfig | n
   const storedModels = localStorage.getItem("ai_models");
   const models = storedModels ? JSON.parse(storedModels) : {};
   
-  const defaultModel = 'gemini-2.0-flash-exp';
+  const defaultModel = 'gemini-2.5-flash';
 
   return {
     apiKey,
@@ -66,6 +66,66 @@ export const makeAIRequest = async (prompt: string, options?: {
   } catch (error) {
     console.error('Error with Gemini:', error);
     throw error;
+  }
+};
+
+export const generateFlashcardsFromContent = async (
+  content: string, 
+  sourceType: string = 'document',
+  title: string = '',
+  cardCount: number = 8
+) => {
+  const config = getAIProviderConfig();
+  
+  if (!config) {
+    throw new Error('لم يتم العثور على مفتاح Gemini API. يرجى إعداده في الإعدادات.');
+  }
+
+  const flashcardPrompt = `بناءً على المحتوى التالي، قم بإنشاء ${cardCount} بطاقة تعليمية ذكية:
+
+العنوان: ${title || 'محتوى تعليمي'}
+نوع المصدر: ${sourceType}
+
+المحتوى:
+${content}
+
+يجب أن تكون الإجابة بصيغة JSON فقط مع هذا التنسيق:
+[
+  {
+    "id": "1",
+    "front": "السؤال أو المفهوم هنا", 
+    "back": "الإجابة أو الشرح التفصيلي هنا",
+    "difficulty": "medium",
+    "category": "${sourceType}",
+    "tags": ["${title}", "بنيان_AI"],
+    "source": "${sourceType}",
+    "signature": "📘 صنع بواسطة Bunyan_AI"
+  }
+]
+
+تأكد من:
+- تنويع أنواع الأسئلة (تعريفات، أمثلة، تطبيقات، مقارنات)
+- تغطية المحتوى بشكل شامل ومتوازن
+- استخدام لغة عربية واضحة ومفهومة
+- تصنيف صعوبة البطاقات بدقة`;
+
+  try {
+    const result = await makeAIRequest(flashcardPrompt, {
+      systemPrompt: 'أنت خبير في إنشاء البطاقات التعليمية التفاعلية. أجب بصيغة JSON صحيحة فقط.',
+      model: config.model
+    });
+
+    const cleanJson = result.replace(/```json|```/g, '').trim();
+    const flashcards = JSON.parse(cleanJson);
+    
+    if (!Array.isArray(flashcards)) {
+      throw new Error('تنسيق غير صحيح للبطاقات');
+    }
+
+    return flashcards;
+  } catch (error) {
+    console.error('Error generating flashcards:', error);
+    throw new Error('حدث خطأ في إنشاء البطاقات التعليمية');
   }
 };
 
@@ -165,7 +225,7 @@ export const validateAPIKey = async (apiKey: string): Promise<boolean> => {
   try {
     const testPrompt = 'مرحبا';
     const systemPrompt = 'أجب بكلمة "نعم" فقط';
-    await makeGeminiRequest(apiKey, 'gemini-2.0-flash-exp', testPrompt, systemPrompt);
+    await makeGeminiRequest(apiKey, 'gemini-2.5-flash', testPrompt, systemPrompt);
     return true;
   } catch (error) {
     console.error('API validation failed for Gemini:', error);
