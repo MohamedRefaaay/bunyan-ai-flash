@@ -41,7 +41,7 @@ const ResponsiveLayout = ({
                 {/* Mobile Sidebar Trigger & Logo */}
                 <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                   {showSidebar && (
-                    <SidebarTrigger className="lg:hidden h-12 w-12 p-2 flex-shrink-0 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 hover:scale-105 touch-manipulation select-none" />
+                    <SidebarTrigger className="lg:hidden h-10 w-10 p-2 flex-shrink-0 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 hover:scale-105" />
                   )}
                   
                   {/* Logo */}

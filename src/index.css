@@ -98,24 +98,17 @@
     font-family: 'Cairo', sans-serif;
   }
 
-  /* Enhanced touch targets for mobile */
+  /* Improved touch targets for mobile */
   @media (max-width: 768px) {
-    button, [role="button"] {
-      min-height: 48px;
-      min-width: 48px;
-      touch-action: manipulation;
+    button {
+      min-height: 44px;
+      min-width: 44px;
     }
     
     a {
-      min-height: 48px;
+      min-height: 44px;
       display: inline-flex;
       align-items: center;
-      touch-action: manipulation;
-    }
-
-    /* Improve scroll performance on mobile */
-    * {
-      -webkit-overflow-scrolling: touch;
     }
   }
 
@@ -136,40 +129,6 @@
     width: 100%;
     max-width: 100vw;
     overflow-x: hidden;
-  }
-
-  /* Enhanced scrollbar styling */
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.05);
-    border-radius: 3px;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 3px;
-    transition: background 0.2s ease;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.3);
-  }
-
-  /* Touch-friendly animations */
-  .touch-manipulation {
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .select-none {
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
   }
 }
 
@@ -195,9 +154,9 @@
     @apply text-lg sm:text-xl lg:text-2xl xl:text-3xl;
   }
 
-  /* Enhanced touch-friendly interactive elements */
+  /* Touch-friendly interactive elements */
   .touch-target {
-    @apply min-h-[48px] min-w-[48px] flex items-center justify-center touch-manipulation select-none;
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
   }
 
   /* Responsive Arabic text alignment */
@@ -220,42 +179,6 @@
   .card-responsive {
     @apply w-full max-w-full overflow-hidden;
   }
-
-  /* Improved overflow control */
-  .overscroll-contain {
-    overscroll-behavior: contain;
-  }
-
-  /* Enhanced animations */
-  .animate-fade-in {
-    animation: fade-in 0.3s ease-out forwards;
-  }
-
-  .animate-scale-in {
-    animation: scale-in 0.2s ease-out forwards;
-  }
-
-  @keyframes fade-in {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes scale-in {
-    from {
-      transform: scale(0.95);
-      opacity: 0;
-    }
-    to {
-      transform: scale(1);
-      opacity: 1;
-    }
-  }
 }
 
 /* Custom media queries for better responsive design */
@@ -267,23 +190,12 @@
   .heading-responsive {
     font-size: clamp(1rem, 4vw, 1.25rem);
   }
-
-  /* Improve touch targets on small screens */
-  button, [role="button"] {
-    min-height: 52px !important;
-    padding: 12px 16px;
-  }
 }
 
 @media (max-width: 375px) {
   .container {
     padding-left: 0.75rem;
     padding-right: 0.75rem;
-  }
-
-  /* Extra small screens adjustments */
-  button, [role="button"] {
-    font-size: 14px;
   }
 }
 
@@ -292,19 +204,5 @@
   .mobile-landscape-adjust {
     min-height: auto;
     height: auto;
-  }
-
-  /* Adjust sidebar height in landscape */
-  [data-sidebar] {
-    height: 100vh;
-  }
-}
-
-/* Enhanced focus styles for accessibility */
-@media (focus-visible) {
-  button:focus-visible,
-  [role="button"]:focus-visible {
-    outline: 2px solid #3b82f6;
-    outline-offset: 2px;
   }
 }
