@@ -27,8 +27,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger
 } from '@/components/ui/sidebar';
 
 interface ModernSidebarProps {
@@ -65,8 +63,19 @@ const ModernSidebar = ({ activeFeature, onFeatureChange }: ModernSidebarProps) =
     { id: 'cloud', icon: Cloud, label: 'التكامل السحابي' },
   ];
 
-  const handleItemClick = (itemId: string | null) => {
+  const handleItemClick = (itemId: string | null, event?: React.MouseEvent) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
     console.log('Sidebar item clicked:', itemId);
+    
+    // Force focus management for mobile
+    const activeElement = document.activeElement as HTMLElement;
+    if (activeElement && activeElement.blur) {
+      activeElement.blur();
+    }
     
     // Always call onFeatureChange to update the active feature
     if (onFeatureChange) {
@@ -74,12 +83,17 @@ const ModernSidebar = ({ activeFeature, onFeatureChange }: ModernSidebarProps) =
     }
     
     // Navigate to dashboard if not already there
-    if (window.location.pathname !== '/dashboard') {
+    const currentPath = window.location.pathname;
+    if (currentPath !== '/dashboard') {
       navigate('/dashboard');
     }
   };
 
-  const handleSettingsClick = () => {
+  const handleSettingsClick = (event?: React.MouseEvent) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
     navigate('/settings');
   };
 
@@ -93,22 +107,32 @@ const ModernSidebar = ({ activeFeature, onFeatureChange }: ModernSidebarProps) =
           {items.map((item, index) => (
             <SidebarMenuItem key={item.id || 'dashboard'} className="animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
               <SidebarMenuButton
-                onClick={() => handleItemClick(item.id)}
+                onClick={(event) => handleItemClick(item.id, event)}
                 isActive={item.active || activeFeature === item.id}
-                className={`w-full justify-start gap-3 text-right transition-all duration-300 ease-in-out cursor-pointer rounded-lg p-3 group hover:scale-[1.02] transform ${
+                className={`w-full justify-start gap-3 text-right transition-all duration-300 ease-in-out cursor-pointer rounded-lg p-3 group hover:scale-[1.02] transform min-h-[48px] touch-manipulation select-none ${
                   (item.active || activeFeature === item.id) 
                     ? 'bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 border-r-4 border-blue-600 shadow-md' 
                     : 'text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:text-blue-700 hover:shadow-sm'
                 }`}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleItemClick(item.id);
+                  }
+                }}
               >
-                <item.icon className={`h-5 w-5 transition-all duration-300 group-hover:scale-110 ${
+                <item.icon className={`h-5 w-5 transition-all duration-300 group-hover:scale-110 flex-shrink-0 ${
                   (item.active || activeFeature === item.id) 
                     ? 'text-blue-600' 
                     : 'text-gray-500 group-hover:text-blue-600'
                 }`} />
-                <span className="font-medium transition-all duration-200 group-hover:translate-x-1">{item.label}</span>
+                <span className="font-medium transition-all duration-200 group-hover:translate-x-1 flex-1 text-right truncate">
+                  {item.label}
+                </span>
                 {(item.active || activeFeature === item.id) && (
-                  <div className="ml-auto w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
+                  <div className="ml-auto w-2 h-2 bg-blue-600 rounded-full animate-pulse flex-shrink-0"></div>
                 )}
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -122,22 +146,22 @@ const ModernSidebar = ({ activeFeature, onFeatureChange }: ModernSidebarProps) =
     <Sidebar side="right" className="w-80 border-l border-gray-200 bg-white/95 backdrop-blur-md">
       <SidebarHeader className="p-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
         <div className="flex items-center gap-3 animate-scale-in">
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 transform">
+          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 transform flex-shrink-0">
             <Bot className="h-6 w-6 text-white" />
           </div>
-          <div className="flex-1">
-            <h3 className="font-bold text-gray-900 text-xl bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-bold text-gray-900 text-xl bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent truncate">
               بنيان الذكي
             </h3>
-            <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            <p className="text-xs text-gray-500 mt-1 flex items-center gap-1 truncate">
+              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse flex-shrink-0"></span>
               مدعوم بـ Google Gemini
             </p>
           </div>
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="p-3 space-y-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+      <SidebarContent className="p-3 space-y-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 overscroll-contain">
         {renderMenuGroup(mainMenuItems, 'الأدوات الرئيسية')}
         {renderMenuGroup(aiToolsItems, 'أدوات الذكاء الاصطناعي')}
         {renderMenuGroup(analyticsItems, 'التحليلات والتوصيات')}
@@ -148,11 +172,21 @@ const ModernSidebar = ({ activeFeature, onFeatureChange }: ModernSidebarProps) =
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              onClick={handleSettingsClick}
-              className="w-full justify-start gap-3 text-right transition-all duration-300 hover:bg-gradient-to-r hover:from-gray-100 hover:to-blue-100 hover:text-gray-800 cursor-pointer text-gray-700 rounded-lg p-3 group hover:scale-[1.02] transform hover:shadow-sm"
+              onClick={(event) => handleSettingsClick(event)}
+              className="w-full justify-start gap-3 text-right transition-all duration-300 hover:bg-gradient-to-r hover:from-gray-100 hover:to-blue-100 hover:text-gray-800 cursor-pointer text-gray-700 rounded-lg p-3 group hover:scale-[1.02] transform hover:shadow-sm min-h-[48px] touch-manipulation select-none"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleSettingsClick();
+                }
+              }}
             >
-              <Settings className="h-5 w-5 text-gray-500 group-hover:text-blue-600 transition-all duration-300 group-hover:rotate-45" />
-              <span className="font-medium transition-all duration-200 group-hover:translate-x-1">إعدادات Gemini</span>
+              <Settings className="h-5 w-5 text-gray-500 group-hover:text-blue-600 transition-all duration-300 group-hover:rotate-45 flex-shrink-0" />
+              <span className="font-medium transition-all duration-200 group-hover:translate-x-1 flex-1 text-right truncate">
+                إعدادات Gemini
+              </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
