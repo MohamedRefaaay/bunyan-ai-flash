@@ -1,10 +1,13 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Sparkles, Bot, Settings, AlertCircle, Type } from 'lucide-react';
+import { Loader2, Sparkles, Bot, Settings, AlertCircle, Type, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { makeAIRequest, getAIProviderConfig } from '@/utils/aiProviders';
+import { exportToAnki } from '@/utils/ankiExporter';
+import FlashcardGeneratorButton from '@/components/flashcards/FlashcardGeneratorButton';
 import type { Flashcard } from '@/types/flashcard';
 
 interface FlashcardGeneratorProps {
@@ -21,6 +24,7 @@ const FlashcardGenerator = ({
   setIsProcessing 
 }: FlashcardGeneratorProps) => {
   const [flashcardFormat, setFlashcardFormat] = useState<'qa' | 'cloze' | 'mcq' | 'true_false'>('qa');
+  const [generatedFlashcards, setGeneratedFlashcards] = useState<Flashcard[]>([]);
   
   const generateFlashcards = async () => {
     if (!transcript) {
@@ -30,7 +34,7 @@ const FlashcardGenerator = ({
 
     const config = getAIProviderConfig();
     if (!config) {
-      toast.error("الرجاء إدخال مفتاح API في الإعدادات أولاً.", {
+      toast.error("الرجاء إدخال مفتاح Gemini API في الإعدادات أولاً.", {
         action: {
           label: "إعدادات",
           onClick: () => window.location.href = "/settings"
@@ -44,7 +48,7 @@ const FlashcardGenerator = ({
     const basePromptInfo = `
 النص: ${transcript}
 
-يجب أن تكون الإجابة بصيغة JSON فقط مع هذا التنسيق (لا تقم بإضافة التوقيع، سأضيفه بنفسي):
+يجب أن تكون الإجابة بصيغة JSON فقط مع هذا التنسيق:
 [
   {
     "id": "1",
@@ -52,41 +56,38 @@ const FlashcardGenerator = ({
     "back": "...",
     "difficulty": "medium",
     "category": "عام",
-    "tags": ["bunyan_ai"]
+    "tags": ["bunyan_ai"],
+    "signature": "📘 Made with Bunyan_AI"
   }
 ]
 `;
 
     const prompts = {
-      qa: `قم بإنشاء 10 بطاقات تعليمية بصيغة سؤال وجواب من النص التالي.
+      qa: `قم بإنشاء 10 بطاقات تعليمية بصيغة سؤال وجواب من النص التالي باستخدام Gemini AI.
 ${basePromptInfo}`,
 
-      cloze: `قم بإنشاء 10 بطاقات تعليمية بصيغة ملء الفراغات (Cloze) من النص التالي. استخدم صيغة Anki القياسية {{c1::الكلمة}} في حقل "front".
+      cloze: `قم بإنشاء 10 بطاقات تعليمية بصيغة ملء الفراغات (Cloze) من النص التالي باستخدام Gemini AI. استخدم صيغة Anki القياسية {{c1::الكلمة}} في حقل "front".
 ${basePromptInfo}`,
 
-      mcq: `قم بإنشاء 10 بطاقات تعليمية بصيغة اختيار من متعدد من النص التالي. يجب أن يحتوي حقل "front" على السؤال، وحقل "back" على الخيارات مع توضيح الإجابة الصحيحة.
+      mcq: `قم بإنشاء 10 بطاقات تعليمية بصيغة اختيار من متعدد من النص التالي باستخدام Gemini AI. يجب أن يحتوي حقل "front" على السؤال، وحقل "back" على الخيارات مع توضيح الإجابة الصحيحة.
 ${basePromptInfo}`,
       
-      true_false: `قم بإنشاء 10 بطاقات تعليمية بصيغة صح/خطأ من النص التالي. يجب أن يحتوي حقل "front" على العبارة، وحقل "back" على "صح" أو "خطأ" مع شرح موجز.
+      true_false: `قم بإنشاء 10 بطاقات تعليمية بصيغة صح/خطأ من النص التالي باستخدام Gemini AI. يجب أن يحتوي حقل "front" على العبارة، وحقل "back" على "صح" أو "خطأ" مع شرح موجز.
 ${basePromptInfo}`
     };
 
     try {
       const response = await makeAIRequest(prompts[flashcardFormat], {
-        systemPrompt: 'أنت خبير في إنشاء البطاقات التعليمية. أجب بصيغة JSON صحيحة فقط بدون أي نص إضافي.'
+        systemPrompt: 'أنت خبير في إنشاء البطاقات التعليمية باستخدام Gemini AI. أجب بصيغة JSON صحيحة فقط بدون أي نص إضافي.'
       });
 
       const cleanJson = response.replace(/```json|```/g, '').trim();
       const parsedFlashcards = JSON.parse(cleanJson);
       
       if (Array.isArray(parsedFlashcards)) {
-        const flashcardsWithSignature = parsedFlashcards.map(card => ({
-            ...card,
-            back: card.back ? `${card.back}\n\n📘 Made with Bunyan_Anki_AI` : '📘 Made with Bunyan_Anki_AI'
-        }));
-
-        onFlashcardsGenerated(flashcardsWithSignature);
-        toast.success(`تم إنشاء ${flashcardsWithSignature.length} بطاقة تعليمية بنجاح!`);
+        setGeneratedFlashcards(parsedFlashcards);
+        onFlashcardsGenerated(parsedFlashcards);
+        toast.success(`تم إنشاء ${parsedFlashcards.length} بطاقة تعليمية بنجاح بواسطة Gemini!`);
       } else {
         throw new Error('تنسيق غير صحيح للبطاقات');
       }
@@ -98,6 +99,21 @@ ${basePromptInfo}`
     }
   };
 
+  const handleExportToAnki = async () => {
+    if (generatedFlashcards.length === 0) {
+      toast.error('لا توجد بطاقات للتصدير');
+      return;
+    }
+
+    try {
+      await exportToAnki(generatedFlashcards, 'Bunyan AI Flashcards');
+      toast.success(`تم تصدير ${generatedFlashcards.length} بطاقة إلى Anki بنجاح!`);
+    } catch (error) {
+      console.error('Error exporting to Anki:', error);
+      toast.error('حدث خطأ في تصدير البطاقات');
+    }
+  };
+
   const config = getAIProviderConfig();
 
   return (
@@ -105,10 +121,10 @@ ${basePromptInfo}`
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Bot className="h-6 w-6 text-green-600" />
-          مولد البطاقات التعليمية الذكي
+          مولد البطاقات التعليمية بـ Gemini AI
           {config && (
             <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full">
-              {config.provider.toUpperCase()}
+              Gemini Powered
             </span>
           )}
         </CardTitle>
@@ -119,9 +135,9 @@ ${basePromptInfo}`
             <div className="flex items-center gap-3">
               <AlertCircle className="h-5 w-5 text-yellow-600" />
               <div className="flex-1">
-                <h4 className="font-medium text-yellow-900">مطلوب إعداد مزود الذكاء الاصطناعي</h4>
+                <h4 className="font-medium text-yellow-900">مطلوب إعداد Gemini AI</h4>
                 <p className="text-sm text-yellow-800 mt-1">
-                  يرجى الذهاب إلى الإعدادات وإدخال مفتاح API لأحد مزودي الذكاء الاصطناعي
+                  يرجى الذهاب إلى الإعدادات وإدخال مفتاح Gemini API
                 </p>
               </div>
               <Button variant="outline" size="sm" onClick={() => window.location.href = "/settings"}>
@@ -164,30 +180,45 @@ ${basePromptInfo}`
           </div>
         )}
 
-        {/* زر الإنشاء */}
-        <Button 
-          onClick={generateFlashcards} 
-          disabled={isProcessing || !transcript || !config}
-          className="w-full gap-2 bg-green-600 hover:bg-green-700"
-          size="lg"
-        >
-          {isProcessing ? (
-            <>
-              <Loader2 className="h-5 w-5 animate-spin" />
-              جاري إنشاء البطاقات التعليمية...
-            </>
-          ) : (
-            <>
-              <Sparkles className="h-5 w-5" />
-              إنشاء البطاقات التعليمية الذكية
-            </>
+        {/* أزرار الإنشاء والتصدير */}
+        <div className="space-y-3">
+          <Button 
+            onClick={generateFlashcards} 
+            disabled={isProcessing || !transcript || !config}
+            className="w-full gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            size="lg"
+          >
+            {isProcessing ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" />
+                جاري إنشاء البطاقات بواسطة Gemini...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-5 w-5" />
+                إنشاء البطاقات بـ Gemini AI
+              </>
+            )}
+          </Button>
+
+          {generatedFlashcards.length > 0 && (
+            <Button
+              onClick={handleExportToAnki}
+              variant="outline"
+              className="w-full gap-2 border-green-300 text-green-700 hover:bg-green-50"
+              size="lg"
+            >
+              <Download className="h-5 w-5" />
+              تصدير إلى Anki ({generatedFlashcards.length} بطاقة)
+            </Button>
           )}
-        </Button>
+        </div>
 
         {/* معلومات إضافية */}
-        <div className="text-xs text-gray-500 space-y-1">
-          <p>• يتم إنشاء البطاقات باستخدام الذكاء الاصطناعي المتقدم</p>
-          <p>• يدعم اللغة العربية والإنجليزية</p>
+        <div className="text-xs text-gray-500 space-y-1 bg-blue-50 p-3 rounded-lg">
+          <p>• <strong>مدعوم بـ Google Gemini AI</strong> - أحدث تقنيات الذكاء الاصطناعي</p>
+          <p>• يدعم اللغة العربية والإنجليزية بشكل متقدم</p>
+          <p>• تصدير مباشر إلى Anki بصيغة CSV متوافقة</p>
           <p>• يمكن تحرير البطاقات بعد إنشائها</p>
         </div>
       </CardContent>
