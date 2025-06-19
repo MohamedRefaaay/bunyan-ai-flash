@@ -69,6 +69,10 @@ const ModernSidebar = ({ activeFeature, onFeatureChange }: ModernSidebarProps) =
     if (onFeatureChange) {
       onFeatureChange(itemId);
     }
+    // Navigate to dashboard if not already there
+    if (window.location.pathname !== '/dashboard') {
+      navigate('/dashboard');
+    }
   };
 
   const handleSettingsClick = () => {
@@ -77,7 +81,7 @@ const ModernSidebar = ({ activeFeature, onFeatureChange }: ModernSidebarProps) =
 
   const renderMenuGroup = (items: any[], groupLabel: string) => (
     <SidebarGroup>
-      <SidebarGroupLabel className="text-right">{groupLabel}</SidebarGroupLabel>
+      <SidebarGroupLabel className="text-right text-sm font-semibold text-gray-700">{groupLabel}</SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
           {items.map((item) => (
@@ -85,10 +89,16 @@ const ModernSidebar = ({ activeFeature, onFeatureChange }: ModernSidebarProps) =
               <SidebarMenuButton
                 onClick={() => handleItemClick(item.id)}
                 isActive={item.active || activeFeature === item.id}
-                className="w-full justify-start gap-3 text-right"
+                className={`w-full justify-start gap-3 text-right transition-all duration-200 hover:bg-blue-50 hover:text-blue-700 cursor-pointer ${
+                  (item.active || activeFeature === item.id) 
+                    ? 'bg-blue-100 text-blue-800 border-r-2 border-blue-600' 
+                    : 'text-gray-700 hover:text-blue-700'
+                }`}
               >
-                <item.icon className="h-5 w-5" />
-                <span>{item.label}</span>
+                <item.icon className={`h-5 w-5 ${
+                  (item.active || activeFeature === item.id) ? 'text-blue-600' : 'text-gray-500'
+                }`} />
+                <span className="font-medium">{item.label}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
@@ -98,10 +108,10 @@ const ModernSidebar = ({ activeFeature, onFeatureChange }: ModernSidebarProps) =
   );
 
   return (
-    <Sidebar side="right" className="w-80">
-      <SidebarHeader className="p-4">
+    <Sidebar side="right" className="w-80 border-l border-gray-200">
+      <SidebarHeader className="p-4 border-b border-gray-100">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-md">
             <Bot className="h-5 w-5 text-white" />
           </div>
           <div>
@@ -111,22 +121,22 @@ const ModernSidebar = ({ activeFeature, onFeatureChange }: ModernSidebarProps) =
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="p-2">
+      <SidebarContent className="p-2 space-y-2">
         {renderMenuGroup(mainMenuItems, 'الأدوات الرئيسية')}
         {renderMenuGroup(aiToolsItems, 'أدوات الذكاء الاصطناعي')}
         {renderMenuGroup(analyticsItems, 'التحليلات والتوصيات')}
         {renderMenuGroup(communityItems, 'المجتمع والتكامل')}
       </SidebarContent>
 
-      <SidebarFooter className="p-4 border-t">
+      <SidebarFooter className="p-4 border-t border-gray-100">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={handleSettingsClick}
-              className="w-full justify-start gap-3 text-right"
+              className="w-full justify-start gap-3 text-right transition-all duration-200 hover:bg-gray-50 hover:text-gray-800 cursor-pointer text-gray-700"
             >
-              <Settings className="h-5 w-5" />
-              <span>إعدادات Gemini</span>
+              <Settings className="h-5 w-5 text-gray-500" />
+              <span className="font-medium">إعدادات Gemini</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
