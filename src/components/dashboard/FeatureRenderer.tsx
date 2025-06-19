@@ -64,22 +64,50 @@ const FeatureRenderer = ({
   onRecommendationsApply,
   onVisualCardsGenerated
 }: FeatureRendererProps) => {
+  // Add logging to track feature switching
+  console.log('FeatureRenderer - Active feature:', activeFeature);
+
   switch (activeFeature) {
     case 'document-analyzer':
-      return <DocumentAnalyzer onFlashcardsGenerated={onFlashcardsGenerated} onDocumentProcessed={onDocumentProcessed} sessionId={sessionId} />;
+      return (
+        <DocumentAnalyzer 
+          onFlashcardsGenerated={onFlashcardsGenerated} 
+          onDocumentProcessed={onDocumentProcessed} 
+          sessionId={sessionId} 
+        />
+      );
     case 'youtube':
-      return <YouTubeSummarizer onFlashcardsGenerated={onFlashcardsGenerated} onYouTubeProcessed={onYouTubeProcessed} sessionId={sessionId} />;
+      return (
+        <YouTubeSummarizer 
+          onFlashcardsGenerated={onFlashcardsGenerated} 
+          onYouTubeProcessed={onYouTubeProcessed} 
+          sessionId={sessionId} 
+        />
+      );
     case 'upload':
-      return <AudioUploader onFileUpload={onFileUpload} onTranscriptGenerated={onTranscriptGenerated} />;
+      return (
+        <AudioUploader 
+          onFileUpload={onFileUpload} 
+          onTranscriptGenerated={onTranscriptGenerated} 
+        />
+      );
     case 'summary':
-      return <AISummary onSummaryGenerated={onSummaryGenerated} onFlashcardsGenerated={onFlashcardsGenerated} sessionId={sessionId} />;
+      return (
+        <AISummary 
+          onSummaryGenerated={onSummaryGenerated} 
+          onFlashcardsGenerated={onFlashcardsGenerated} 
+          sessionId={sessionId} 
+        />
+      );
     case 'generator':
-      return <FlashcardGenerator 
-        transcript={transcript} 
-        onFlashcardsGenerated={onFlashcardsGenerated}
-        isProcessing={isProcessing}
-        setIsProcessing={setIsProcessing}
-      />;
+      return (
+        <FlashcardGenerator 
+          transcript={transcript} 
+          onFlashcardsGenerated={onFlashcardsGenerated}
+          isProcessing={isProcessing}
+          setIsProcessing={setIsProcessing}
+        />
+      );
     case 'preview':
       return <FlashcardPreview flashcards={flashcards} onCardEdit={onCardEdit} />;
     case 'editor':

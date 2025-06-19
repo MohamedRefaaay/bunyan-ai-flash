@@ -66,9 +66,13 @@ const ModernSidebar = ({ activeFeature, onFeatureChange }: ModernSidebarProps) =
   ];
 
   const handleItemClick = (itemId: string | null) => {
+    console.log('Sidebar item clicked:', itemId);
+    
+    // Always call onFeatureChange to update the active feature
     if (onFeatureChange) {
       onFeatureChange(itemId);
     }
+    
     // Navigate to dashboard if not already there
     if (window.location.pathname !== '/dashboard') {
       navigate('/dashboard');
