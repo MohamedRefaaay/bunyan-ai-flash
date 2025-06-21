@@ -23,7 +23,7 @@ const ResponsiveLayout = ({
 
   return (
     <SidebarProvider defaultOpen={!isMobile}>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-indigo-50/20 w-full flex">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-indigo-50/20 w-full flex" dir="rtl">
         {/* Sidebar */}
         {showSidebar && (
           <ModernSidebar
@@ -41,7 +41,7 @@ const ResponsiveLayout = ({
                 {/* Mobile Sidebar Trigger & Logo */}
                 <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                   {showSidebar && (
-                    <SidebarTrigger className="lg:hidden h-10 w-10 p-2 flex-shrink-0 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 hover:scale-105" />
+                    <SidebarTrigger className="lg:hidden h-10 w-10 p-2 flex-shrink-0 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 hover:scale-105 touch-target" />
                   )}
                   
                   {/* Logo */}

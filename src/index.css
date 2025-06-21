@@ -5,40 +5,28 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. */
-
 @layer base {
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
-
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
-
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-
     --primary: 222.2 47.4% 11.2%;
     --primary-foreground: 210 40% 98%;
-
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
-
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
-
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
-
     --radius: 0.5rem;
-
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -52,28 +40,20 @@
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
-
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-
     --primary: 210 40% 98%;
     --primary-foreground: 222.2 47.4% 11.2%;
-
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
-
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
-
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
@@ -98,37 +78,20 @@
     font-family: 'Cairo', sans-serif;
   }
 
-  /* Improved touch targets for mobile */
-  @media (max-width: 768px) {
-    button {
-      min-height: 44px;
-      min-width: 44px;
-    }
-    
-    a {
-      min-height: 44px;
-      display: inline-flex;
-      align-items: center;
-    }
-  }
-
-  /* Better text rendering for Arabic */
-  html[dir="rtl"] {
-    text-align: right;
-  }
-
-  /* Prevent horizontal scroll on mobile */
   html, body {
     overflow-x: hidden;
     width: 100%;
     max-width: 100vw;
   }
 
-  /* Fix for mobile layout issues */
   #root {
     width: 100%;
     max-width: 100vw;
     overflow-x: hidden;
+  }
+
+  html[dir="rtl"] {
+    text-align: right;
   }
 }
 
@@ -137,11 +100,27 @@
     display: none;
   }
   .scrollbar-hide {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 
-  /* Mobile-friendly utilities */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-gray-100;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 rounded-full;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400;
+  }
+
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+  }
+
   .mobile-padding {
     @apply px-3 sm:px-4 lg:px-6;
   }
@@ -154,12 +133,6 @@
     @apply text-lg sm:text-xl lg:text-2xl xl:text-3xl;
   }
 
-  /* Touch-friendly interactive elements */
-  .touch-target {
-    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
-  }
-
-  /* Responsive Arabic text alignment */
   .rtl-text {
     direction: rtl;
     text-align: right;
@@ -170,19 +143,59 @@
     text-align: left;
   }
 
-  /* Better responsive breakpoints */
   .container-responsive {
     @apply w-full max-w-full px-3 sm:px-4 lg:px-6 xl:px-8;
   }
 
-  /* Fix for card components on mobile */
   .card-responsive {
     @apply w-full max-w-full overflow-hidden;
   }
+
+  /* Animation utilities */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.2s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
 }
 
-/* Custom media queries for better responsive design */
-@media (max-width: 480px) {
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  button, .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
   .text-responsive {
     font-size: clamp(0.75rem, 2.5vw, 0.875rem);
   }
@@ -199,10 +212,29 @@
   }
 }
 
-/* Fix for landscape mode on mobile */
 @media (max-height: 500px) and (orientation: landscape) {
   .mobile-landscape-adjust {
     min-height: auto;
     height: auto;
+  }
+}
+
+/* Improved focus states for accessibility */
+@media (prefers-reduced-motion: no-preference) {
+  .transition-all {
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .border-gray-200 {
+    @apply border-gray-600;
+  }
+  
+  .text-gray-500 {
+    @apply text-gray-800;
   }
 }

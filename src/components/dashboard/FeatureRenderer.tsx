@@ -13,6 +13,7 @@ import CommunityModule from '@/components/CommunityModule';
 import CloudIntegration from '@/components/CloudIntegration';
 import DocumentAnalyzer from '@/components/document/DocumentAnalyzer';
 import YouTubeSummarizer from '@/components/YouTubeSummarizer';
+import AIChatInterface from '@/components/chat/AIChatInterface';
 import type { Flashcard } from '@/types/flashcard';
 
 interface FeatureRendererProps {
@@ -64,10 +65,19 @@ const FeatureRenderer = ({
   onRecommendationsApply,
   onVisualCardsGenerated
 }: FeatureRendererProps) => {
-  // Add logging to track feature switching
   console.log('FeatureRenderer - Active feature:', activeFeature);
 
   switch (activeFeature) {
+    case 'ai-chat':
+      return (
+        <AIChatInterface 
+          sessionId={sessionId}
+          context={transcript}
+          onFlashcardsGenerated={async (flashcards) => {
+            await onFlashcardsGenerated(flashcards);
+          }}
+        />
+      );
     case 'document-analyzer':
       return (
         <DocumentAnalyzer 
@@ -134,6 +144,12 @@ const FeatureRenderer = ({
       return <CommunityModule />;
     case 'cloud':
       return <CloudIntegration />;
+    case 'voice-chat':
+      return (
+        <div className="text-center text-gray-500 py-8">
+          <p>المحادثة الصوتية - قريباً</p>
+        </div>
+      );
     default:
       return null;
   }
